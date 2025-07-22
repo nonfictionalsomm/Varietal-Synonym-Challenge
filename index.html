@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Sommelier's Grid</title>
+    <title>Vineyard Validator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -11,44 +11,25 @@
             font-family: 'Inter', sans-serif;
             touch-action: manipulation;
         }
-        .card-container {
-            perspective: 1000px;
-        }
         .card {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.6s;
-            cursor: pointer;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+            cursor: grab;
         }
-        .card.is-flipped {
-            transform: rotateY(180deg);
+        .card:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .dragging {
+            opacity: 0.5;
         }
-        .card-face-front {
-            background-color: #4A5568; /* gray-700 */
-            color: white;
-            background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239CA3AF' fill-opacity='0.1'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6H10zM42 26c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6H42z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        .drop-zone {
+            transition: background-color 0.2s, border-color 0.2s;
+            min-height: 100px;
         }
-        .card-face-back {
-            background-color: #F7FAFC; /* gray-50 */
-            color: #2D3748; /* gray-800 */
-            transform: rotateY(180deg);
-            border: 1px solid #E2E8F0; /* gray-300 */
+        .drop-zone.drag-over {
+            background-color: #E6FFFA; /* teal-50 */
+            border-color: #38B2AC; /* teal-400 */
         }
         .card-type {
             font-size: 0.75rem;
@@ -58,42 +39,17 @@
             margin-bottom: 0.5rem;
             text-transform: uppercase;
         }
-        .card-content {
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        .primary-grape { background-color: #C53030; color: white; } /* red-700 */
         .synonym { background-color: #2B6CB0; color: white; } /* blue-700 */
         .region { background-color: #2F855A; color: white; } /* green-700 */
         .theory { background-color: #805AD5; color: white; } /* purple-600 */
         
-        #game-board {
-            display: grid;
-            gap: 1rem;
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
-        
-        /* Responsive grid columns */
-        @media (max-width: 639px) { /* sm */
-            #game-board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        }
-        @media (min-width: 640px) and (max-width: 1023px) { /* md */
-            #game-board { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-        }
-        @media (min-width: 1024px) { /* lg */
-            #game-board { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-        }
-
-        .matched .card-face-back {
-            background-color: #C6F6D5; /* green-200 */
-            border-color: #68D391; /* green-400 */
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .matched .card {
-            cursor: not-allowed;
-        }
-        #message-box {
-            transition: opacity 0.5s, transform 0.5s;
+        .shake {
+            animation: shake 0.3s ease-in-out;
         }
         #welcome-modal {
             transition: opacity 0.3s ease-in-out;
@@ -105,53 +61,66 @@
     <!-- Welcome Modal -->
     <div id="welcome-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-2xl p-6 md:p-8 max-w-lg w-full text-center transform transition-all scale-95 opacity-0" id="modal-content">
-            <h2 class="text-3xl font-bold mb-4 text-gray-800">Welcome to The Sommelier's Grid!</h2>
+            <h2 class="text-3xl font-bold mb-4 text-gray-800">Welcome to Vineyard Validator!</h2>
             <p class="text-gray-600 mb-6">
-                Your goal is to match sets of related cards to test your grape knowledge.
+                A new challenge awaits. Drag the correct cards from the Answer Pool into the slots to match the Primary Grape.
             </p>
-            <div class="text-left mb-8 space-y-3 bg-gray-50 p-4 rounded-lg border">
-                <p><strong class="text-green-700">Easy Mode:</strong> Match a 3-card set: <span class="font-semibold text-red-700">Primary Grape</span> + <span class="font-semibold text-blue-700">Synonym</span> + <span class="font-semibold text-green-700">Region</span>.</p>
-                <p><strong class="text-purple-700">Hard Mode:</strong> Match a 4-card set: The three above + a random <span class="font-semibold text-purple-700">Theory</span> card (Law, Vinification, or Terroir).</p>
+            <div class="text-left mb-8 space-y-4 bg-gray-50 p-4 rounded-lg border">
+                <p>Find the correct <strong class="text-blue-700">Synonym</strong> and <strong class="text-green-700">Region</strong> for the grape shown.</p>
+                <p>In <strong class="text-purple-700">Hard Mode</strong>, you'll also need to find the matching <strong class="text-purple-700">Theory</strong> card!</p>
             </div>
-            <button id="close-modal-btn" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                Let's Play!
-            </button>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="start-easy" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Start Easy Mode
+                </button>
+                <button id="start-hard" class="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Start Hard Mode
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-        <header class="text-center mb-6">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">The Sommelier's Grid</h1>
-            <p class="text-lg text-gray-600 mt-2">Match the Grape to its Synonym, Region, and Theory</p>
+        <header class="text-center mb-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Vineyard Validator</h1>
         </header>
 
-        <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
-            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                <div class="flex items-center space-x-4">
-                    <label for="game-mode" class="font-semibold">Game Mode:</label>
-                    <select id="game-mode" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                        <option value="easy">Easy (Grape + Synonym + Region)</option>
-                        <option value="hard" selected>Hard (Grape + Synonym + Region + Theory)</option>
-                    </select>
-                </div>
-                <button id="start-game" class="w-full md:w-auto bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                    New Game
-                </button>
-                <div id="score" class="font-semibold text-xl">Score: 0</div>
+        <!-- Challenge Area -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6 text-center">
+            <p class="text-lg text-gray-600 mb-2">Primary Grape:</p>
+            <h2 id="challenge-grape" class="text-3xl md:text-4xl font-bold text-red-700">-</h2>
+        </div>
+
+        <!-- Drop Zones -->
+        <div id="drop-zones" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div id="synonym-zone" class="drop-zone bg-gray-200 rounded-lg p-4 border-2 border-dashed border-gray-400 flex flex-col items-center justify-center">
+                <span class="font-semibold text-gray-500">Synonym</span>
+            </div>
+            <div id="region-zone" class="drop-zone bg-gray-200 rounded-lg p-4 border-2 border-dashed border-gray-400 flex flex-col items-center justify-center">
+                <span class="font-semibold text-gray-500">Region</span>
+            </div>
+            <div id="theory-zone" class="drop-zone bg-gray-200 rounded-lg p-4 border-2 border-dashed border-gray-400 flex flex-col items-center justify-center">
+                <span class="font-semibold text-gray-500">Theory</span>
             </div>
         </div>
-
-        <div id="game-board" class="mb-6">
-            <!-- Cards will be generated here by JavaScript -->
+        
+        <!-- Controls -->
+        <div class="flex flex-col md:flex-row justify-between items-center bg-white rounded-lg shadow-lg p-4 mb-6 gap-4">
+             <div id="score" class="font-bold text-2xl text-gray-700">Score: 0</div>
+             <button id="validate-btn" class="w-full md:w-auto bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                Validate
+            </button>
+            <div id="message-area" class="font-semibold text-lg h-8">&nbsp;</div>
         </div>
 
-        <div id="message-box" class="fixed top-5 right-5 bg-white p-4 rounded-lg shadow-lg border-l-4 opacity-0 transform translate-x-12 max-w-sm" role="alert">
-            <p id="message-text" class="font-semibold"></p>
-        </div>
 
-        <footer class="text-center text-gray-500 text-sm mt-8">
-            <p>A study tool based on the data you provided. Good luck!</p>
-        </footer>
+        <!-- Answer Pool -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-xl font-bold mb-4 text-center">Answer Pool</h3>
+            <div id="answer-pool" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- Draggable cards go here -->
+            </div>
+        </div>
     </div>
 
     <script>
@@ -201,22 +170,27 @@
             { primary: "Zinfandel", synonym: "Primitivo", region: "Italy", law: "Primitivo di Manduria DOC: Min. 85% Primitivo.", vinification: "Name refers to early-ripening. Can be fresh/unoaked or powerful/oaked.", terroir: "Thrives in hot, dry climate on *terra rossa* soils. Often grown as *alberello*." }
         ];
 
-        const gameBoard = document.getElementById('game-board');
-        const startGameBtn = document.getElementById('start-game');
-        const gameModeSelect = document.getElementById('game-mode');
-        const scoreEl = document.getElementById('score');
-        const messageBox = document.getElementById('message-box');
-        const messageText = document.getElementById('message-text');
+        // DOM Elements
         const welcomeModal = document.getElementById('welcome-modal');
         const modalContent = document.getElementById('modal-content');
-        const closeModalBtn = document.getElementById('close-modal-btn');
+        const startEasyBtn = document.getElementById('start-easy');
+        const startHardBtn = document.getElementById('start-hard');
+        const challengeGrapeEl = document.getElementById('challenge-grape');
+        const dropZones = {
+            synonym: document.getElementById('synonym-zone'),
+            region: document.getElementById('region-zone'),
+            theory: document.getElementById('theory-zone')
+        };
+        const answerPoolEl = document.getElementById('answer-pool');
+        const validateBtn = document.getElementById('validate-btn');
+        const scoreEl = document.getElementById('score');
+        const messageAreaEl = document.getElementById('message-area');
 
-        let flippedCards = [];
-        let matchedCards = [];
+        // Game State
+        let currentMode = 'hard';
+        let currentChallenge = null;
         let score = 0;
-        let canFlip = true;
-        let currentChainGrape = null;
-        let chainMatchSets = [];
+        let draggedCardData = null;
 
         function showWelcomeModal() {
             welcomeModal.classList.remove('hidden');
@@ -233,9 +207,18 @@
                 welcomeModal.classList.add('hidden');
             }, 300);
         }
-        
-        closeModalBtn.addEventListener('click', hideWelcomeModal);
 
+        function startGame(mode) {
+            hideWelcomeModal();
+            currentMode = mode;
+            score = 0;
+            updateScore();
+            document.getElementById('theory-zone').style.display = mode === 'hard' ? 'flex' : 'none';
+            document.querySelector('#drop-zones').classList.toggle('md:grid-cols-2', mode === 'easy');
+            document.querySelector('#drop-zones').classList.toggle('md:grid-cols-3', mode === 'hard');
+            nextChallenge();
+        }
+        
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -244,190 +227,180 @@
             return array;
         }
 
-        function createCard(cardData, type) {
-            const cardContainer = document.createElement('div');
-            cardContainer.className = 'card-container h-32 md:h-36';
-            
+        function createCard(type, text) {
             const card = document.createElement('div');
-            card.className = 'card';
-            card.dataset.id = cardData.id;
+            card.className = 'card bg-white rounded-lg p-3 shadow border flex flex-col items-center justify-center text-center';
+            card.draggable = true;
             card.dataset.type = type;
-            card.dataset.primary = cardData.primary;
-
-            const cardFaceFront = document.createElement('div');
-            cardFaceFront.className = 'card-face card-face-front';
-            cardFaceFront.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M16.5 6.5C15 5.3 13.3 4.5 11.5 4.5C8.5 4.5 6 6.7 6 9.7C6 11.4 6.8 12.9 8 13.9L8.2 14.1C9.6 15.2 10 17 10 18.5V20M14 20V18.5C14 17 14.4 15.2 15.8 14.1L16 13.9C17.2 12.9 18 11.4 18 9.7C18 8.1 17.4 6.8 16.5 6.5ZM10 4C10 2.9 10.9 2 12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4Z"></path></svg>`;
-
-            const cardFaceBack = document.createElement('div');
-            cardFaceBack.className = 'card-face card-face-back';
+            card.dataset.text = text;
+            card.innerHTML = `<div class="card-type ${type}">${type}</div><div class="font-medium text-sm">${text}</div>`;
             
-            const typeEl = document.createElement('div');
-            typeEl.className = `card-type ${type}`;
-            typeEl.textContent = type.replace('-', ' ');
-
-            const contentEl = document.createElement('div');
-            contentEl.className = 'card-content';
-            contentEl.textContent = cardData[type];
-
-            cardFaceBack.appendChild(typeEl);
-            cardFaceBack.appendChild(contentEl);
-
-            card.appendChild(cardFaceFront);
-            card.appendChild(cardFaceBack);
-            cardContainer.appendChild(card);
-            
-            card.addEventListener('click', () => flipCard(card));
-            return cardContainer;
+            card.addEventListener('dragstart', handleDragStart);
+            return card;
         }
 
-        function startGame() {
-            const mode = gameModeSelect.value;
-            score = 0;
-            updateScore();
-            gameBoard.innerHTML = '';
-            flippedCards = [];
-            matchedCards = [];
-            currentChainGrape = null;
-            chainMatchSets = [];
+        function nextChallenge() {
+            // Reset UI
+            challengeGrapeEl.textContent = '...';
+            Object.values(dropZones).forEach(zone => {
+                zone.innerHTML = `<span class="font-semibold text-gray-500">${zone.id.replace('-zone', '')}</span>`;
+                zone.dataset.card = null;
+            });
+            answerPoolEl.innerHTML = '';
+            validateBtn.disabled = true;
+            messageAreaEl.textContent = '\u00A0'; // non-breaking space for layout
 
-            const numSets = mode === 'easy' ? 6 : 4;
-            const shuffledData = shuffle([...gameData]);
-            const gameSets = shuffledData.slice(0, numSets);
-            
-            let cardsToCreate = [];
-            gameSets.forEach((item, index) => {
+            // Select new challenge
+            const challengeIndex = Math.floor(Math.random() * gameData.length);
+            currentChallenge = gameData[challengeIndex];
+            challengeGrapeEl.textContent = currentChallenge.primary;
+
+            // Populate Answer Pool
+            let answerCards = [];
+            // Add correct answers
+            answerCards.push(createCard('synonym', currentChallenge.synonym));
+            answerCards.push(createCard('region', currentChallenge.region));
+            if (currentMode === 'hard') {
                 const theoryTypes = ['law', 'vinification', 'terroir'];
                 const randomTheoryType = shuffle(theoryTypes)[0];
+                answerCards.push(createCard('theory', currentChallenge[randomTheoryType]));
+            }
+
+            // Add red herrings
+            const numHerrings = 5;
+            const herringData = shuffle(gameData.filter(d => d.primary !== currentChallenge.primary)).slice(0, numHerrings);
+            herringData.forEach(herring => {
+                const types = ['synonym', 'region'];
+                if (currentMode === 'hard') types.push('theory');
+                const randomType = shuffle(types)[0];
                 
-                const cardSet = {
-                    id: index,
-                    primary: item.primary,
-                    synonym: item.synonym,
-                    region: item.region,
-                    theory: item[randomTheoryType]
-                };
-
-                cardsToCreate.push({ ...cardSet, type: 'primary-grape' });
-                cardsToCreate.push({ ...cardSet, type: 'synonym' });
-                cardsToCreate.push({ ...cardSet, type: 'region' });
-                if (mode === 'hard') {
-                    cardsToCreate.push({ ...cardSet, type: 'theory' });
+                let text = herring[randomType];
+                if (randomType === 'theory') {
+                     const theoryTypes = ['law', 'vinification', 'terroir'];
+                     const randomTheoryType = shuffle(theoryTypes)[0];
+                     text = herring[randomTheoryType];
                 }
+                answerCards.push(createCard(randomType, text));
             });
-            
-            shuffle(cardsToCreate).forEach(cardInfo => {
-                const cardElement = createCard(cardInfo, cardInfo.type);
-                gameBoard.appendChild(cardElement);
-            });
-        }
 
-        function flipCard(card) {
-            if (!canFlip || card.classList.contains('is-flipped') || matchedCards.includes(card.dataset.id + card.dataset.type)) return;
-
-            card.classList.add('is-flipped');
-            flippedCards.push(card);
-
-            const mode = gameModeSelect.value;
-            const requiredMatches = mode === 'easy' ? 3 : 4;
-
-            if (flippedCards.length === requiredMatches) {
-                canFlip = false;
-                checkForMatch();
-            }
-        }
-
-        function checkForMatch() {
-            const firstCard = flippedCards[0];
-            const primaryGrapeName = firstCard.dataset.primary;
-
-            const isMatch = flippedCards.every(card => card.dataset.primary === primaryGrapeName);
-            const isSetComplete = new Set(flippedCards.map(c => c.dataset.type)).size === flippedCards.length;
-
-            if (isMatch && isSetComplete) {
-                handleCorrectMatch();
-            } else {
-                handleIncorrectMatch();
-            }
+            shuffle(answerCards).forEach(card => answerPoolEl.appendChild(card));
         }
         
-        function handleCorrectMatch() {
-            score += 10;
-            updateScore();
-            showMessage('Correct Match!', 'border-green-500');
+        function handleDragStart(e) {
+            draggedCardData = { type: e.target.dataset.type, text: e.target.dataset.text };
+            e.target.classList.add('dragging');
+        }
+        
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
 
-            const primaryCard = flippedCards.find(c => c.dataset.type === 'primary-grape');
-            const primaryGrapeName = primaryCard.dataset.primary;
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+        
+        function handleDragLeave(e) {
+             e.currentTarget.classList.remove('drag-over');
+        }
 
-            // Chain Match Logic for Hard Mode
-            if (gameModeSelect.value === 'hard') {
-                 if (!currentChainGrape) {
-                    currentChainGrape = primaryGrapeName;
-                    const allSynonymsForGrape = gameData.filter(item => item.primary === primaryGrapeName);
-                    if (allSynonymsForGrape.length > 1) {
-                        showMessage(`Chain Match Started for ${primaryGrapeName}!`, 'border-blue-500');
-                    }
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            
+            const dropZone = e.currentTarget;
+            const cardType = draggedCardData.type;
+
+            // Only allow dropping if the type matches the zone
+            if (dropZone.id.startsWith(cardType)) {
+                // If zone has a card, move it back to pool
+                if (dropZone.dataset.card) {
+                    const oldCardData = JSON.parse(dropZone.dataset.card);
+                    answerPoolEl.appendChild(createCard(oldCardData.type, oldCardData.text));
                 }
-            }
 
-            flippedCards.forEach(card => {
-                card.parentElement.classList.add('matched');
-                matchedCards.push(card.dataset.id + card.dataset.type);
-                // In hard mode with chain matching, flip the primary grape back over
-                if (gameModeSelect.value === 'hard' && card.dataset.type === 'primary-grape' && currentChainGrape === primaryGrapeName) {
-                     setTimeout(() => {
-                        card.classList.remove('is-flipped');
-                        card.parentElement.classList.remove('matched');
-                        const index = matchedCards.indexOf(card.dataset.id + card.dataset.type);
-                        if (index > -1) matchedCards.splice(index, 1);
-                     }, 1200);
+                dropZone.innerHTML = '';
+                const droppedCard = createCard(draggedCardData.type, draggedCardData.text);
+                droppedCard.draggable = false; // Make it non-draggable once dropped
+                droppedCard.style.cursor = 'default';
+                dropZone.appendChild(droppedCard);
+                dropZone.dataset.card = JSON.stringify(draggedCardData);
+
+                // Remove original from pool
+                const cardToRemove = Array.from(answerPoolEl.children).find(c => c.dataset.text === draggedCardData.text && c.dataset.type === draggedCardData.type);
+                if (cardToRemove) cardToRemove.remove();
+            }
+            
+            checkAllZonesFilled();
+        }
+        
+        function checkAllZonesFilled() {
+            const requiredZones = currentMode === 'easy' ? ['synonym', 'region'] : ['synonym', 'region', 'theory'];
+            const allFilled = requiredZones.every(zone => dropZones[zone].dataset.card);
+            validateBtn.disabled = !allFilled;
+        }
+
+        function validateAnswer() {
+            let correct = true;
+            const requiredZones = currentMode === 'easy' ? ['synonym', 'region'] : ['synonym', 'region', 'theory'];
+            
+            requiredZones.forEach(zoneType => {
+                const zone = dropZones[zoneType];
+                const cardData = JSON.parse(zone.dataset.card);
+                
+                let isCorrect = false;
+                if(zoneType === 'theory') {
+                    isCorrect = (currentChallenge.law === cardData.text || currentChallenge.vinification === cardData.text || currentChallenge.terroir === cardData.text);
+                } else {
+                    isCorrect = (currentChallenge[zoneType] === cardData.text);
+                }
+
+                if (!isCorrect) {
+                    correct = false;
+                    zone.firstChild.classList.add('shake', 'border-2', 'border-red-500');
+                    setTimeout(() => {
+                        answerPoolEl.appendChild(createCard(cardData.type, cardData.text));
+                        zone.innerHTML = `<span class="font-semibold text-gray-500">${zone.id.replace('-zone', '')}</span>`;
+                        zone.dataset.card = null;
+                        checkAllZonesFilled();
+                    }, 800);
+                } else {
+                    zone.firstChild.classList.add('border-2', 'border-green-500');
                 }
             });
 
-            flippedCards = [];
-            canFlip = true;
-            checkWinCondition();
-        }
-
-        function handleIncorrectMatch() {
-            score -= 2;
-            updateScore();
-            showMessage('Incorrect. Try again.', 'border-red-500');
-
-            setTimeout(() => {
-                flippedCards.forEach(card => card.classList.remove('is-flipped'));
-                flippedCards = [];
-                canFlip = true;
-            }, 1500);
-        }
-
-        function checkWinCondition() {
-            const totalCards = gameBoard.children.length;
-            if (matchedCards.length === totalCards) {
-                showMessage(`You've matched all the grapes! Final Score: ${score}`, 'border-yellow-400', 5000);
+            if (correct) {
+                score += 10;
+                messageAreaEl.textContent = 'Correct!';
+                messageAreaEl.className = 'font-semibold text-lg text-green-600';
+                setTimeout(nextChallenge, 1500);
+            } else {
+                score -= 2;
+                messageAreaEl.textContent = 'Not quite...';
+                messageAreaEl.className = 'font-semibold text-lg text-red-600';
             }
+            updateScore();
         }
 
         function updateScore() {
             scoreEl.textContent = `Score: ${score}`;
         }
 
-        function showMessage(text, borderColor, duration = 2000) {
-            messageText.textContent = text;
-            messageBox.className = `fixed top-5 right-5 bg-white p-4 rounded-lg shadow-lg border-l-4 opacity-100 transform translate-x-0 max-w-sm ${borderColor}`;
-            
-            setTimeout(() => {
-                messageBox.className = messageBox.className.replace('opacity-100 translate-x-0', 'opacity-0 translate-x-12');
-            }, duration);
-        }
+        // Event Listeners
+        startEasyBtn.addEventListener('click', () => startGame('easy'));
+        startHardBtn.addEventListener('click', () => startGame('hard'));
+        validateBtn.addEventListener('click', validateAnswer);
 
-        startGameBtn.addEventListener('click', startGame);
-        gameModeSelect.addEventListener('change', startGame);
-
-        // Initial game start
-        window.addEventListener('load', () => {
-            showWelcomeModal();
-            startGame();
+        Object.values(dropZones).forEach(zone => {
+            zone.addEventListener('dragover', handleDragOver);
+            zone.addEventListener('dragleave', handleDragLeave);
+            zone.addEventListener('drop', handleDrop);
         });
+        
+        document.addEventListener('dragend', handleDragEnd);
+
+        window.addEventListener('load', showWelcomeModal);
+
     </script>
 </body>
 </html>
