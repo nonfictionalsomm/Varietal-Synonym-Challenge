@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vineyard Validator</title>
+    <title>Cepage Cipher</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -11,48 +11,43 @@
             font-family: 'Inter', sans-serif;
             touch-action: manipulation;
         }
-        .card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s;
-            cursor: grab;
+        .answer-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s, background-color 0.2s, border-color 0.2s, opacity 0.3s;
+            cursor: pointer;
+            min-height: 80px;
         }
-        .card:active {
-            cursor: grabbing;
-            transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        .answer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
-        .dragging {
-            opacity: 0.5;
+        .challenge-slot {
+            transition: background-color 0.3s, border-color 0.3s;
+            height: 90px;
         }
-        .drop-zone {
-            transition: background-color 0.2s, border-color 0.2s;
-            min-height: 100px;
+        .challenge-slot.filled {
+            background-color: #C6F6D5;
+            border-color: #38A169;
         }
-        .drop-zone.drag-over {
-            background-color: #E6FFFA; /* teal-50 */
-            border-color: #38B2AC; /* teal-400 */
+        .correct-guess {
+            opacity: 0;
+            transform: scale(0.5);
         }
-        .card-type {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-        }
-        .synonym { background-color: #2B6CB0; color: white; } /* blue-700 */
-        .region { background-color: #2F855A; color: white; } /* green-700 */
-        .theory { background-color: #805AD5; color: white; } /* purple-600 */
-        
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
-        .shake {
-            animation: shake 0.3s ease-in-out;
+        .incorrect-guess {
+            animation: shake 0.4s ease-in-out;
+            background-color: #FED7D7 !important;
+            border-color: #C53030 !important;
         }
         #welcome-modal {
             transition: opacity 0.3s ease-in-out;
+        }
+        /* Centering for grid containers */
+        #challenge-slots, #answer-pool {
+            justify-content: center;
         }
     </style>
 </head>
@@ -61,13 +56,13 @@
     <!-- Welcome Modal -->
     <div id="welcome-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-2xl p-6 md:p-8 max-w-lg w-full text-center transform transition-all scale-95 opacity-0" id="modal-content">
-            <h2 class="text-3xl font-bold mb-4 text-gray-800">Welcome to Vineyard Validator!</h2>
+            <h2 class="text-3xl font-bold mb-4 text-gray-800">Welcome to Cepage Cipher!</h2>
             <p class="text-gray-600 mb-6">
-                A new challenge awaits. Drag the correct cards from the Answer Pool into the slots to match the Primary Grape.
+                Decode the cipher! For the given Primary Grape, find all of its synonyms from the pool below.
             </p>
             <div class="text-left mb-8 space-y-4 bg-gray-50 p-4 rounded-lg border">
-                <p>Find the correct <strong class="text-blue-700">Synonym</strong> and <strong class="text-green-700">Region</strong> for the grape shown.</p>
-                <p>In <strong class="text-purple-700">Hard Mode</strong>, you'll also need to find the matching <strong class="text-purple-700">Theory</strong> card!</p>
+                 <p><strong class="text-green-700">Easy Mode:</strong> Find all the synonyms for a given grape.</p>
+                <p><strong class="text-purple-700">Hard Mode:</strong> After finding the synonyms, you'll face a follow-up challenge to identify the correct <strong>Region</strong> for one of them!</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-4">
                 <button id="start-easy" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
@@ -80,117 +75,157 @@
         </div>
     </div>
 
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-        <header class="text-center mb-4">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Vineyard Validator</h1>
+    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Cepage Cipher</h1>
+            <div class="mt-4 flex justify-center items-center gap-8">
+                <div id="score" class="font-bold text-2xl text-gray-700">Score: 0</div>
+                <div id="round-tracker" class="font-semibold text-lg text-gray-500">Round: 1/10</div>
+            </div>
         </header>
 
         <!-- Challenge Area -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6 text-center">
-            <p class="text-lg text-gray-600 mb-2">Primary Grape:</p>
-            <h2 id="challenge-grape" class="text-3xl md:text-4xl font-bold text-red-700">-</h2>
-        </div>
-
-        <!-- Drop Zones -->
-        <div id="drop-zones" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div id="synonym-zone" class="drop-zone bg-gray-200 rounded-lg p-4 border-2 border-dashed border-gray-400 flex flex-col items-center justify-center">
-                <span class="font-semibold text-gray-500">Synonym</span>
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div id="challenge-header" class="text-center mb-4">
+                <p id="challenge-title" class="text-lg text-gray-600">Primary Grape:</p>
+                <h2 id="challenge-grape" class="text-3xl md:text-4xl font-bold text-red-700">-</h2>
             </div>
-            <div id="region-zone" class="drop-zone bg-gray-200 rounded-lg p-4 border-2 border-dashed border-gray-400 flex flex-col items-center justify-center">
-                <span class="font-semibold text-gray-500">Region</span>
-            </div>
-            <div id="theory-zone" class="drop-zone bg-gray-200 rounded-lg p-4 border-2 border-dashed border-gray-400 flex flex-col items-center justify-center">
-                <span class="font-semibold text-gray-500">Theory</span>
+            <div id="challenge-slots" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <!-- Empty slots for correct answers go here -->
             </div>
         </div>
-        
-        <!-- Controls -->
-        <div class="flex flex-col md:flex-row justify-between items-center bg-white rounded-lg shadow-lg p-4 mb-6 gap-4">
-             <div id="score" class="font-bold text-2xl text-gray-700">Score: 0</div>
-             <button id="validate-btn" class="w-full md:w-auto bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                Validate
-            </button>
-            <div id="message-area" class="font-semibold text-lg h-8">&nbsp;</div>
-        </div>
-
 
         <!-- Answer Pool -->
         <div class="bg-white rounded-lg shadow-lg p-6">
-            <h3 class="text-xl font-bold mb-4 text-center">Answer Pool</h3>
-            <div id="answer-pool" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                <!-- Draggable cards go here -->
+            <h3 id="pool-title" class="text-xl font-bold mb-4 text-center">Synonym Pool</h3>
+            <div id="answer-pool" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <!-- Answer cards will be generated here -->
             </div>
         </div>
+        
+        <!-- Feedback Area -->
+        <div id="feedback-area" class="text-center min-h-[50px] p-4">
+            <p id="feedback-text" class="text-2xl font-bold"></p>
+        </div>
+
     </div>
 
     <script>
-        const gameData = [
-            { primary: "Albariño (Spain)", synonym: "Alvarinho", region: "Portugal", law: "Vinho Verde DOC: In Monção e Melgaço, must be 100% Alvarinho.", vinification: "Protective, anaerobic winemaking in stainless steel; lees contact is common.", terroir: "Cool, wet, maritime climate; granite and sandy soils." },
-            { primary: "Altesse", synonym: "Roussette", region: "Savoie", law: "Roussette de Savoie AOP: Must be 100% Altesse. Can be followed by a cru name.", vinification: "Can be fermented in stainless steel or oak; known for aging potential.", terroir: "Steep, well-drained limestone scree slopes in the Alps." },
-            { primary: "Arinto", synonym: "Pederña", region: "Vinho Verde", law: "Vinho Verde DOC: A key blending grape, prized for retaining high acidity.", vinification: "Used in blends to contribute acidity; vinified in stainless steel for freshness.", terroir: "High acidity makes it a reliable performer in the cool, damp climate." },
-            { primary: "Arneis", synonym: "Nebbiolo Bianco", region: "Piedmont historical name", law: "Roero Arneis DOCG: Must be at least 95% Arneis.", vinification: "Modern vinification as a dry white in inert vessels to preserve floral notes.", terroir: "Thrives on sandy, fossil-rich soils of the Roero hills." },
-            { primary: "Cabernet Franc", synonym: "Breton", region: "Touraine", law: "Chinon, Bourgueil, Saumur-Champigny AOPs: Often 100% varietal.", vinification: "Can be light (semi-carbonic) or structured (traditional fermentation, neutral oak).", terroir: "Style dictated by soil: sandy/gravel (lighter) vs. clay-limestone/tuffeau (structured)." },
-            { primary: "Carignan", synonym: "Mazuelo/a", region: "Rioja", law: "Rioja DOCa: A minor blending grape valued for high acidity, color, and tannin.", vinification: "Used in small percentages to add structure and freshness to Tempranillo blends.", terroir: "Late-ripening grape that needs a warm climate; old vines preferred." },
-            { primary: "Carmenère", synonym: "Cabernet Gernischt", region: "China", law: "No strict national appellation system, but a recognized variety.", vinification: "Often made in a Bordeaux style with French oak aging. Can be herbal if not ripe.", terroir: "Arid climates like Ningxia can fully ripen the grape, reducing pyrazines." },
-            { primary: "Chardonnay", synonym: "Beaunois", region: "Chablis", law: "Chablis AOP: Must be 100% Chardonnay. Name 'Beaunois' is a local synonym.", vinification: "Vinified to emphasize purity; typically in stainless steel or neutral oak.", terroir: "Kimmeridgian marl (limestone-clay with fossils) imparts flinty, steely minerality." },
-            { primary: "Chasselas", synonym: "Fendant", region: "Valais", law: "Valais AOP: Fendant is the legally protected name for Chasselas in Valais.", vinification: "Typically fermented in stainless steel or large neutral oak to preserve delicate aromatics.", terroir: "Steep, terraced, south-facing vineyards along the Rhône river." },
-            { primary: "Chenin Blanc", synonym: "Steen", region: "South Africa", law: "Wine of Origin (WO) System: Varietal labels require min. 85%. Old Vine Project certifies vines 35+ years old.", vinification: "Extremely versatile: fresh/unoaked, complex/oaked, sparkling, or sweet.", terroir: "Old bush vines in Swartland & Stellenbosch (granite soils) are prized." },
-            { primary: "Dolcetto", synonym: "Ormeasco", region: "Liguria", law: "Ormeasco di Pornassio DOC: Min. 95% Ormeasco. Can be red, Superiore, or rosato.", vinification: "Fermented in stainless steel to preserve bright cherry fruit and floral notes.", terroir: "High-altitude, terraced vineyards of the Ligurian Alps." },
-            { primary: "Gewürztraminer", synonym: "Traminer", region: "Alto Adige", law: "Alto Adige Traminer Aromatico DOC: Min. 85% Gewürztraminer.", vinification: "Intensely aromatic dry whites fermented in stainless steel or large neutral oak.", terroir: "Calcareous clay and gravel soils at altitude help preserve acidity." },
-            { primary: "Grenache", synonym: "Cannonau", region: "Sardinia", law: "Cannonau di Sardegna DOC: Min. 85% Cannonau. 'Classico' subzone has stricter rules.", vinification: "Riserva requires min. 2 years aging (6 months in oak/chestnut).", terroir: "Thrives in hot, dry Mediterranean climate; often grown as bush vines on sandy/granite soils." },
-            { primary: "Lemberger", synonym: "Blaufränkisch", region: "Austria", law: "Flagship red of Burgenland. DACs include Mittelburgenland, Leithaberg, Eisenberg.", vinification: "Can be fresh/unoaked or serious/structured and aged in large oak or barriques.", terroir: "Leithaberg (limestone/schist) for minerality; Eisenberg (iron-rich) for spice." },
-            { primary: "Macabeo", synonym: "Viura", region: "Rioja", law: "Rioja DOCa: The main white grape for young, fresh whites and traditional, oxidative, barrel-aged whites.", vinification: "Young Viura in steel; traditional aged Viura fermented/aged in American oak.", terroir: "Productive variety; its susceptibility to oxidation is used stylistically." },
-            { primary: "Malbec", synonym: "Côt", region: "Cahors, France", law: "Cahors AOP: Min. 70% Malbec (Côt), blended with Merlot/Tannat.", vinification: "Modern methods manage tannins. Aging in large foudres or smaller barrels.", terroir: "Limestone plateau (Causses) for structure; gravel river terraces for fruitier styles." },
-            { primary: "Mencía (Spain)", synonym: "Jaen", region: "Portugal", law: "Dão DOC: A key red variety, often blended with Touriga Nacional.", vinification: "Contributes bright red fruit, high acidity, and floral notes to Dão blends.", terroir: "Grown on the high-altitude granite plateau of the Dão." },
-            { primary: "Mondeuse Noire", synonym: "Grosse Syrah", region: "Jura", law: "Local synonym, not related to Syrah. Permitted in Arbois AOP.", vinification: "Produces deeply colored, aromatic red wines with high acidity and firm tannins.", terroir: "Grown on the marl and limestone soils of the Jura." },
-            { primary: "Mourvèdre (France)", synonym: "Monastrell", region: "Spain", law: "Dominant red in DOs like Jumilla, Yecla, Alicante.", vinification: "Can be powerful, high-alcohol single-varietal red, or used in blends/rosé.", terroir: "Perfectly adapted to hot, arid climate; often ungrafted bush vines in sandy soils." },
-            { primary: "Muscat Blanc À Petits Grains", synonym: "Moscato Bianco", region: "Italy", law: "The grape of Asti Spumante DOCG and Moscato d'Asti DOCG.", vinification: "For Moscato d'Asti, fermentation is halted to retain sweetness and create a frizzante style.", terroir: "Thrives on calcareous marl soils of the Asti region in Piedmont." },
-            { primary: "Muscat of Alexandria", synonym: "Zibibbo", region: "Sicily", law: "Passito di Pantelleria DOC: Must be 100% Zibibbo, from dried grapes.", vinification: "Vinified as a sweet passito wine; can also be a dry, aromatic white.", terroir: "Grown on windy, volcanic island of Pantelleria, often in hollows for protection." },
-            { primary: "Nebbiolo", synonym: "Spanna", region: "Novara & Vercelli", law: "Gattinara & Ghemme DOCGs: Nebbiolo (Spanna) is the principal grape.", vinification: "Requires long aging, traditionally in large, neutral oak casks, to soften tannins.", terroir: "Cooler foothills of the Alps on acidic, mineral-rich soils." },
-            { primary: "Palomino Fino", synonym: "Listán Blanco", region: "Canary Islands", law: "Main grape for dry whites, e.g., in Ycoden-Daute-Isora DO.", vinification: "Vinified as a dry, still white wine, often with pronounced saline/mineral character.", terroir: "Ungrafted vines on dark volcanic soils, often trained in *cordón trenzado* style." },
-            { primary: "Petite Sirah", synonym: "Durif", region: "France", law: "Original name; a crossing of Syrah & Peloursin. Very rare in France now.", vinification: "Produces deeply colored, highly tannic wines.", terroir: "Tight bunches are susceptible to rot, which is why it failed in France." },
-            { primary: "Pinot Blanc", synonym: "Weissburgunder", region: "Germany", law: "Can be Qualitätswein or Prädikatswein. Top dry examples are VDP Grosses Gewächs (GG).", vinification: "Can be fresh (steel) or richer (large neutral oak, *Stückfass*).", terroir: "Thrives in warmer regions like Baden and Pfalz on limestone or loess soils." },
-            { primary: "Pinot Gris", synonym: "Pinot Grigio", region: "Italy", law: "Pinot Grigio delle Venezie DOC is the most common. Higher quality from Friuli/Alto Adige.", vinification: "Mass-market style is simple/fruity (steel). Quality versions may see lees contact.", terroir: "Veneto plains for high yields; hills of Friuli/Alto Adige for complexity." },
-            { primary: "Pinot Noir", synonym: "Spätburgunder", region: "Austria & Germany", law: "Most important red in Germany (Baden, Ahr).", vinification: "Has evolved from light/earthy to powerful, Burgundy-like styles aged in barriques.", terroir: "Ahr (steep slate slopes); Baden (limestone/volcanic soils of Kaiserstuhl)." },
-            { primary: "Riesling", synonym: "Rhine Riesling", region: "Australia & EU", law: "Official name in many EU countries. Historical name in Australia.", vinification: "In Clare/Eden Valleys, made bone-dry, fermented in steel to preserve lime/citrus notes.", terroir: "Slate soils and continental climate of Clare/Eden Valleys retain acidity." },
-            { primary: "Roussanne", synonym: "Bergeron", region: "Savoie", law: "Chignin-Bergeron AOP: Must be 100% Roussanne.", vinification: "Full-bodied, aromatic wines with notes of apricot, honey, and nuts. Can age well.", terroir: "South-facing limestone scree slopes of the village of Chignin." },
-            { primary: "Sangiovese", synonym: "Morellino", region: "Maremma", law: "Morellino di Scansano DOCG: Must be min. 85% Sangiovese.", vinification: "Typically fresher, more approachable style than Brunello, often with less oak.", terroir: "Coastal Maremma; maritime influence and sandy soils lead to softer tannins." },
-            { primary: "Sauvignon Blanc", synonym: "Fumé Blanc", region: "Sancerre & Pouilly-Fume", law: "A producer term. In Pouilly-Fumé, local term is Blanc Fumé. Pouilly-Fumé AOP is 100% Sauvignon Blanc.", vinification: "Vinified to express terroir, typically in stainless steel or neutral oak.", terroir: "Famous for *silex* (flint) soils, imparting a smoky, gunflint aroma." },
-            { primary: "Sémillon", synonym: "Hunter River Riesling", region: "Australia", law: "Historical misnomer from the Hunter Valley. Not related to Riesling.", vinification: "Harvested early, fermented in steel, bottled young. Ages for decades, developing toast/honey notes.", terroir: "Warm, humid climate; early harvesting preserves acidity for longevity." },
-            { primary: "Tannat", synonym: "Harriague", region: "Uruguay", law: "The country's signature red grape.", vinification: "Modern winemaking manages tannins with micro-oxygenation and blending. Often oaked.", terroir: "Well-suited to the damp, clay-rich soils and maritime climate." },
-            { primary: "Tempranillo", synonym: "Tinta Roriz", region: "Douro", law: "A key grape for both dry Douro DOC reds and fortified Port.", vinification: "In Port, it adds structure/color. In dry reds, it provides elegant red fruit/firm tannins.", terroir: "Grown on steep, terraced schist slopes of the Douro Valley." },
-            { primary: "Tibouren (Provence)", synonym: "Rossese di Dolceacqua", region: "Liguria", law: "Rossese di Dolceacqua DOC: Min. 95% Rossese.", vinification: "Produces pale, fragrant red wines with notes of rose and strawberry. Vinified to preserve aromatics.", terroir: "Grown in the far west of Liguria; genetically identical to Tibouren." },
-            { primary: "Trebbiano Toscano", synonym: "Ugni Blanc", region: "France, Croatia, & Uruguay", law: "Primary grape for Cognac and Armagnac.", vinification: "For brandy, prized for high acidity and neutral flavor profile.", terroir: "A very productive, hardy, and disease-resistant workhorse variety." },
-            { primary: "Trollinger (Württemberg)", synonym: "Schiava Grossa", region: "Italy", law: "Grown in Alto Adige. Used in Santa Maddalena DOC.", vinification: "Produces light, fruity red wines with low tannins. Best served slightly chilled.", terroir: "Santa Maddalena is a blend of Schiava with a small amount of Lagrein." },
-            { primary: "Trousseau", synonym: "Bastardo", region: "Portugal", law: "A permitted grape in Port, though now rare.", vinification: "Adds red fruit and alcohol to blends. Ripens quickly with high sugar.", terroir: "Early-ripening grape that thrives in hot climates." },
-            { primary: "Verdicchio", synonym: "Trebbiano di Soave", region: "Veneto", law: "A permitted grape in Soave DOC, though Garganega is primary.", vinification: "Can add acidity and a bitter almond note to Soave blends.", terroir: "Less common now in Soave as growers have focused on Garganega." },
-            { primary: "Vermentino", synonym: "Pigato", region: "Liguria", law: "Considered a distinct biotype. Riviera Ligure di Ponente DOC can be labeled as Pigato.", vinification: "Produces aromatic, saline white wines, slightly more bitter than standard Vermentino.", terroir: "Name from 'pigato' (spotted). Thrives in the coastal Ligurian climate." },
-            { primary: "Welschriesling", synonym: "Olaszrizling", region: "Hungary", law: "A workhorse grape. Used for simple dry whites and as a key component in Tokaji blends.", vinification: "As dry wine, often neutral/crisp. In Tokaji, susceptible to noble rot.", terroir: "A reliable, high-yielding grape not related to Rhine Riesling." },
-            { primary: "Xarel·lo", synonym: "Pansa Blanca", region: "Catalunya", law: "Alella DO: The local name for Xarel·lo. Used for still, dry white wines.", vinification: "Produces aromatic, textured white wines with good body and aging potential.", terroir: "Alella DO is known for its unique sandy granite soil called *sauló*." },
-            { primary: "Zinfandel", synonym: "Primitivo", region: "Italy", law: "Primitivo di Manduria DOC: Min. 85% Primitivo.", vinification: "Name refers to early-ripening. Can be fresh/unoaked or powerful/oaked.", terroir: "Thrives in hot, dry climate on *terra rossa* soils. Often grown as *alberello*." }
+        const rawData = [
+            { primary: "Albariño (Spain)", synonym: "Alvarinho", region: "Portugal" },
+            { primary: "Altesse", synonym: "Roussette", region: "Savoie" },
+            { primary: "Arinto", synonym: "Pederña", region: "Vinho Verde" },
+            { primary: "Arneis", synonym: "Nebbiolo Bianco", region: "Piedmont historical name" },
+            { primary: "Blauer Portugieser", synonym: "Kékoportó", region: "Hungary" },
+            { primary: "Boal", synonym: "Malvasia Fina", region: "Dão" },
+            { primary: "Bonarda (Argentina)", synonym: "Charbono", region: "USA" },
+            { primary: "Bonarda (Argentina)", synonym: "Corbeau", region: "Ain, Isère, & Jura" },
+            { primary: "Bonarda (Argentina)", synonym: "Douce Noire", region: "Savoie" },
+            { primary: "Cabernet Franc", synonym: "Bouchet Franc or Gros Bouchet", region: "Right Bank BDX" },
+            { primary: "Cabernet Franc", synonym: "Breton", region: "Touraine" },
+            { primary: "Cabernet Sauvignon", synonym: "Bouchet or Petit Bouchet", region: "Right Bank BDX" },
+            { primary: "Cabernet Sauvignon", synonym: "Vidure or Petite Vidure", region: "Graves" },
+            { primary: "Canaiolo Bianco (Tuscany)", synonym: "Drupeggio", region: "Orvieto" },
+            { primary: "Carignan", synonym: "Bovale Grande", region: "Sardinia" },
+            { primary: "Carignan", synonym: "Carignano", region: "Italy" },
+            { primary: "Carignan", synonym: "Mazuelo/a", region: "Rioja" },
+            { primary: "Carignan", synonym: "Samsó", region: "Catalunya" },
+            { primary: "Carmenère", synonym: "Cabernet Gernischt", region: "China" },
+            { primary: "Chardonnay", synonym: "Gamay Blanc", region: "Jura" },
+            { primary: "Chardonnay", synonym: "Morillon", region: "Austria" },
+            { primary: "Chardonnay", synonym: "Beaunois", region: "Chablis" },
+            { primary: "Chasselas", synonym: "Fendant", region: "Valais" },
+            { primary: "Chenin Blanc", synonym: "Pineau de la Loire", region: "Loire" },
+            { primary: "Chenin Blanc", synonym: "Steen", region: "South Africa" },
+            { primary: "Dolcetto", synonym: "Ormeasco", region: "Liguria" },
+            { primary: "Fer Servadou", synonym: "Braucol", region: "Gaillac" },
+            { primary: "Frühburgunder (Germany)", synonym: "Pinot Noir Précoce", region: "France" },
+            { primary: "Furmint", synonym: "Šipon", region: "Slovenia" },
+            { primary: "Garganega (Veneto)", synonym: "Grecanico Dorato", region: "Sicily" },
+            { primary: "Gewürztraminer", synonym: "Traminer", region: "Alto Adige" },
+            { primary: "Grenache", synonym: "Cannonau", region: "Sardinia" },
+            { primary: "Grenache", synonym: "Garnacha Tinta", region: "Spain" },
+            { primary: "Inzolia (Sicily)", synonym: "Ansonica", region: "Tuscany" },
+            { primary: "Lemberger", synonym: "Blaufränkisch", region: "Austria" },
+            { primary: "Lemberger", synonym: "Kékfrankos", region: "Hungary" },
+            { primary: "Macabeo", synonym: "Viura", region: "Rioja" },
+            { primary: "Malbec", synonym: "Côt", region: "Loire" },
+            { primary: "Malbec", synonym: "Pressac", region: "St. Émilion" },
+            { primary: "Mencía (Spain)", synonym: "Jaen", region: "Portugal" },
+            { primary: "Mission (U.S.)", synonym: "País", region: "Chile" },
+            { primary: "Mondeuse Noire", synonym: "Grosse Syrah", region: "Jura" },
+            { primary: "Mourvèdre (France)", synonym: "Mataró", region: "Catalonia" },
+            { primary: "Mourvèdre (France)", synonym: "Monastrell", region: "Spain" },
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Moscato Bianco", region: "Italy" },
+            { primary: "Muscat of Alexandria", synonym: "Zibibbo", region: "Sicily" },
+            { primary: "Nebbiolo", synonym: "Chiavennasca", region: "Valtellina" },
+            { primary: "Nebbiolo", synonym: "Spanna", region: "Novara & Vercelli" },
+            { primary: "Nero d'Avola", synonym: "Calabrese", region: "Sicily" },
+            { primary: "Palomino Fino", synonym: "Listán Blanco", region: "Canary Islands" },
+            { primary: "Petite Sirah", synonym: "Durif", region: "France" },
+            { primary: "Pinot Blanc", synonym: "Weissburgunder", region: "Germany" },
+            { primary: "Pinot Gris", synonym: "Pinot Grigio", region: "Italy" },
+            { primary: "Pinot Meunier", synonym: "Müllerrebe", region: "Germany" },
+            { primary: "Pinot Noir", synonym: "Spätburgunder", region: "Austria & Germany" },
+            { primary: "Riesling", synonym: "Rhine Riesling", region: "Australia & EU" },
+            { primary: "Roussanne", synonym: "Bergeron", region: "Savoie" },
+            { primary: "Sangiovese", synonym: "Brunello", region: "Montalcino" },
+            { primary: "Sangiovese", synonym: "Morellino", region: "Maremma" },
+            { primary: "Sangiovese", synonym: "Nielluccio", region: "Corsica" },
+            { primary: "Sauvignon Blanc", synonym: "Fumé Blanc", region: "Sancerre & Pouilly-Fume" },
+            { primary: "Sémillon", synonym: "Hunter River Riesling", region: "Australia" },
+            { primary: "Tannat", synonym: "Harriague", region: "Uruguay" },
+            { primary: "Tempranillo", synonym: "Aragonez", region: "Alentejo" },
+            { primary: "Tempranillo", synonym: "Cencibel", region: "La Mancha" },
+            { primary: "Tempranillo", synonym: "Tinta Roriz", region: "Douro" },
+            { primary: "Tempranillo", synonym: "Tinto de Toro", region: "Toro" },
+            { primary: "Tibouren (Provence)", synonym: "Rossese di Dolceacqua", region: "Liguria" },
+            { primary: "Trebbiano Toscano", synonym: "Ugni Blanc", region: "France, Croatia, & Uruguay" },
+            { primary: "Trollinger (Württemberg)", synonym: "Schiava Grossa", region: "Italy" },
+            { primary: "Trousseau", synonym: "Bastardo", region: "Portugal" },
+            { primary: "Verdicchio", synonym: "Trebbiano di Soave", region: "Veneto" },
+            { primary: "Vermentino", synonym: "Pigato", region: "Liguria" },
+            { primary: "Welschriesling", synonym: "Olaszrizling", region: "Hungary" },
+            { primary: "Xarel·lo", synonym: "Pansa Blanca", region: "Catalunya" },
+            { primary: "Zinfandel", synonym: "Primitivo", region: "Italy" }
         ];
+
+        const primaryData = rawData.reduce((acc, item) => {
+            if (!acc[item.primary]) {
+                acc[item.primary] = { synonyms: [] };
+            }
+            acc[item.primary].synonyms.push({ name: item.synonym, region: item.region });
+            return acc;
+        }, {});
+
+        const allPrimaries = Object.keys(primaryData);
+        const allSynonyms = rawData.map(item => item.synonym);
+        const allRegions = [...new Set(rawData.map(item => item.region))];
 
         // DOM Elements
         const welcomeModal = document.getElementById('welcome-modal');
         const modalContent = document.getElementById('modal-content');
         const startEasyBtn = document.getElementById('start-easy');
         const startHardBtn = document.getElementById('start-hard');
+        const challengeTitleEl = document.getElementById('challenge-title');
         const challengeGrapeEl = document.getElementById('challenge-grape');
-        const dropZones = {
-            synonym: document.getElementById('synonym-zone'),
-            region: document.getElementById('region-zone'),
-            theory: document.getElementById('theory-zone')
-        };
+        const challengeSlotsEl = document.getElementById('challenge-slots');
         const answerPoolEl = document.getElementById('answer-pool');
-        const validateBtn = document.getElementById('validate-btn');
+        const poolTitleEl = document.getElementById('pool-title');
         const scoreEl = document.getElementById('score');
-        const messageAreaEl = document.getElementById('message-area');
+        const roundTrackerEl = document.getElementById('round-tracker');
+        const feedbackTextEl = document.getElementById('feedback-text');
 
         // Game State
         let currentMode = 'hard';
-        let currentChallenge = null;
         let score = 0;
-        let draggedCardData = null;
+        let currentRound = 0;
+        const TOTAL_ROUNDS = 10;
+        let gameChallenges = [];
+        let currentChallenge = {};
+        let foundSynonymsCount = 0;
+        let roundStage = 'cipher'; // 'cipher' or 'context'
+        let incorrectSynonymGuesses = new Set();
 
         function showWelcomeModal() {
             welcomeModal.classList.remove('hidden');
@@ -212,11 +247,177 @@
             hideWelcomeModal();
             currentMode = mode;
             score = 0;
+            currentRound = 0;
             updateScore();
-            document.getElementById('theory-zone').style.display = mode === 'hard' ? 'flex' : 'none';
-            document.querySelector('#drop-zones').classList.toggle('md:grid-cols-2', mode === 'easy');
-            document.querySelector('#drop-zones').classList.toggle('md:grid-cols-3', mode === 'hard');
-            nextChallenge();
+            gameChallenges = shuffle(allPrimaries).slice(0, TOTAL_ROUNDS);
+            nextRound();
+        }
+
+        function nextRound() {
+            if (currentRound >= TOTAL_ROUNDS) {
+                endGame();
+                return;
+            }
+            
+            feedbackTextEl.textContent = '';
+            roundStage = 'cipher';
+            
+            const challengeGrapeName = gameChallenges[currentRound];
+            currentRound++;
+            roundTrackerEl.textContent = `Round: ${currentRound}/${TOTAL_ROUNDS}`;
+            
+            currentChallenge = {
+                primary: challengeGrapeName,
+                synonyms: primaryData[challengeGrapeName].synonyms
+            };
+            foundSynonymsCount = 0;
+            incorrectSynonymGuesses.clear();
+
+            displayCipherChallenge();
+        }
+
+        function displayCipherChallenge() {
+            challengeTitleEl.textContent = 'Primary Grape:';
+            challengeGrapeEl.textContent = currentChallenge.primary;
+            challengeGrapeEl.className = 'text-3xl md:text-4xl font-bold text-red-700';
+            poolTitleEl.textContent = 'Synonym Pool';
+            
+            challengeSlotsEl.innerHTML = '';
+            currentChallenge.synonyms.forEach((_, i) => {
+                const slot = document.createElement('div');
+                slot.id = `slot-${i}`;
+                slot.className = 'challenge-slot bg-gray-200 rounded-lg p-2 border-2 border-dashed border-gray-400 flex items-center justify-center';
+                challengeSlotsEl.appendChild(slot);
+            });
+
+            answerPoolEl.innerHTML = '';
+            const numHerrings = currentMode === 'easy' ? 8 : 12;
+            const correctAnswers = currentChallenge.synonyms.map(s => s.name);
+            const herrings = generateHerrings(correctAnswers, allSynonyms, numHerrings);
+            const options = shuffle([...correctAnswers, ...herrings]);
+
+            options.forEach(text => {
+                const card = createAnswerCard(text);
+                card.addEventListener('click', () => selectSynonymAnswer(card, text));
+                answerPoolEl.appendChild(card);
+            });
+        }
+
+        function selectSynonymAnswer(selectedCard, text) {
+            if (selectedCard.disabled) return;
+
+            const isCorrect = currentChallenge.synonyms.some(s => s.name === text);
+
+            if (isCorrect) {
+                score += 10;
+                selectedCard.classList.add('correct-guess');
+                selectedCard.disabled = true;
+
+                const slot = document.getElementById(`slot-${foundSynonymsCount}`);
+                if (slot) {
+                    slot.textContent = text;
+                    slot.classList.add('filled', 'font-semibold', 'text-gray-800');
+                }
+                foundSynonymsCount++;
+
+                if (foundSynonymsCount === currentChallenge.synonyms.length) {
+                    feedbackTextEl.textContent = 'Cipher Complete!';
+                    feedbackTextEl.className = 'text-2xl font-bold text-green-600';
+                    if (currentMode === 'hard') {
+                        setTimeout(startContextStage, 2000);
+                    } else {
+                        setTimeout(nextRound, 2000);
+                    }
+                }
+            } else {
+                score -= 2;
+                incorrectSynonymGuesses.add(text);
+                selectedCard.classList.add('incorrect-guess');
+                setTimeout(() => selectedCard.classList.remove('incorrect-guess'), 1000);
+            }
+            updateScore();
+        }
+        
+        function startContextStage() {
+            roundStage = 'context';
+            feedbackTextEl.textContent = '';
+            
+            const firstTryCorrectSynonyms = currentChallenge.synonyms.filter(s => !incorrectSynonymGuesses.has(s.name));
+            const eligibleSynonyms = firstTryCorrectSynonyms.length > 0 ? firstTryCorrectSynonyms : currentChallenge.synonyms;
+            
+            const contextChallengeSynonym = shuffle(eligibleSynonyms)[0];
+            currentChallenge.contextAnswer = contextChallengeSynonym.region;
+
+            challengeTitleEl.textContent = 'Context Challenge:';
+            challengeGrapeEl.textContent = `What is the region for the synonym "${contextChallengeSynonym.name}"?`;
+            challengeGrapeEl.className = 'text-xl md:text-2xl font-semibold text-gray-800';
+
+            challengeSlotsEl.innerHTML = '';
+            answerPoolEl.innerHTML = '';
+            poolTitleEl.textContent = 'Region Pool';
+            
+            const numHerrings = 5;
+            const herrings = generateHerrings([currentChallenge.contextAnswer], allRegions, numHerrings);
+            const options = shuffle([currentChallenge.contextAnswer, ...herrings]);
+
+            options.forEach(text => {
+                const card = createAnswerCard(text);
+                card.addEventListener('click', () => selectContextAnswer(card, text));
+                answerPoolEl.appendChild(card);
+            });
+        }
+
+        function selectContextAnswer(selectedCard, text) {
+            answerPoolEl.querySelectorAll('button').forEach(b => b.disabled = true);
+
+            if (text === currentChallenge.contextAnswer) {
+                score += 15;
+                selectedCard.classList.add('correct-guess');
+                feedbackTextEl.textContent = 'Region Correct!';
+                feedbackTextEl.className = 'text-2xl font-bold text-green-600';
+            } else {
+                score -= 5;
+                selectedCard.classList.add('incorrect-guess');
+                feedbackTextEl.textContent = `Incorrect. The answer was ${currentChallenge.contextAnswer}.`;
+                feedbackTextEl.className = 'text-xl font-bold text-red-600';
+                
+                 answerPoolEl.querySelectorAll('button').forEach(b => {
+                    if (b.textContent === currentChallenge.contextAnswer) {
+                        b.classList.add('correct-guess');
+                        b.style.opacity = 1; // Make sure it's visible
+                    }
+                });
+            }
+            updateScore();
+            setTimeout(nextRound, 3000);
+        }
+
+        function generateHerrings(correctAnswers, sourceArray, count) {
+            const herrings = new Set();
+            while (herrings.size < count) {
+                const randomItem = sourceArray[Math.floor(Math.random() * sourceArray.length)];
+                if (!correctAnswers.includes(randomItem)) {
+                    herrings.add(randomItem);
+                }
+            }
+            return Array.from(herrings);
+        }
+
+        function createAnswerCard(text) {
+            const card = document.createElement('button');
+            card.className = 'answer-card bg-white rounded-lg p-2 shadow border flex items-center justify-center text-center';
+            card.textContent = text;
+            return card;
+        }
+        
+        function endGame() {
+            challengeTitleEl.textContent = 'Game Over!';
+            challengeGrapeEl.textContent = '';
+            challengeSlotsEl.innerHTML = '';
+            answerPoolEl.innerHTML = '';
+            feedbackTextEl.textContent = `Final Score: ${score}`;
+            feedbackTextEl.insertAdjacentHTML('afterend', `<div class="text-center mt-4"><button id="play-again" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-6 rounded-lg">Play Again</button></div>`);
+            document.getElementById('play-again').addEventListener('click', showWelcomeModal);
         }
         
         function shuffle(array) {
@@ -226,182 +427,17 @@
             }
             return array;
         }
-
-        function createCard(type, text) {
-            const card = document.createElement('div');
-            card.className = 'card bg-white rounded-lg p-3 shadow border flex flex-col items-center justify-center text-center';
-            card.draggable = true;
-            card.dataset.type = type;
-            card.dataset.text = text;
-            card.innerHTML = `<div class="card-type ${type}">${type}</div><div class="font-medium text-sm">${text}</div>`;
-            
-            card.addEventListener('dragstart', handleDragStart);
-            return card;
-        }
-
-        function nextChallenge() {
-            // Reset UI
-            challengeGrapeEl.textContent = '...';
-            Object.values(dropZones).forEach(zone => {
-                zone.innerHTML = `<span class="font-semibold text-gray-500">${zone.id.replace('-zone', '')}</span>`;
-                zone.dataset.card = null;
-            });
-            answerPoolEl.innerHTML = '';
-            validateBtn.disabled = true;
-            messageAreaEl.textContent = '\u00A0'; // non-breaking space for layout
-
-            // Select new challenge
-            const challengeIndex = Math.floor(Math.random() * gameData.length);
-            currentChallenge = gameData[challengeIndex];
-            challengeGrapeEl.textContent = currentChallenge.primary;
-
-            // Populate Answer Pool
-            let answerCards = [];
-            // Add correct answers
-            answerCards.push(createCard('synonym', currentChallenge.synonym));
-            answerCards.push(createCard('region', currentChallenge.region));
-            if (currentMode === 'hard') {
-                const theoryTypes = ['law', 'vinification', 'terroir'];
-                const randomTheoryType = shuffle(theoryTypes)[0];
-                answerCards.push(createCard('theory', currentChallenge[randomTheoryType]));
-            }
-
-            // Add red herrings
-            const numHerrings = 5;
-            const herringData = shuffle(gameData.filter(d => d.primary !== currentChallenge.primary)).slice(0, numHerrings);
-            herringData.forEach(herring => {
-                const types = ['synonym', 'region'];
-                if (currentMode === 'hard') types.push('theory');
-                const randomType = shuffle(types)[0];
-                
-                let text = herring[randomType];
-                if (randomType === 'theory') {
-                     const theoryTypes = ['law', 'vinification', 'terroir'];
-                     const randomTheoryType = shuffle(theoryTypes)[0];
-                     text = herring[randomTheoryType];
-                }
-                answerCards.push(createCard(randomType, text));
-            });
-
-            shuffle(answerCards).forEach(card => answerPoolEl.appendChild(card));
-        }
         
-        function handleDragStart(e) {
-            draggedCardData = { type: e.target.dataset.type, text: e.target.dataset.text };
-            e.target.classList.add('dragging');
-        }
-        
-        function handleDragEnd(e) {
-            e.target.classList.remove('dragging');
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.currentTarget.classList.add('drag-over');
-        }
-        
-        function handleDragLeave(e) {
-             e.currentTarget.classList.remove('drag-over');
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-            
-            const dropZone = e.currentTarget;
-            const cardType = draggedCardData.type;
-
-            // Only allow dropping if the type matches the zone
-            if (dropZone.id.startsWith(cardType)) {
-                // If zone has a card, move it back to pool
-                if (dropZone.dataset.card) {
-                    const oldCardData = JSON.parse(dropZone.dataset.card);
-                    answerPoolEl.appendChild(createCard(oldCardData.type, oldCardData.text));
-                }
-
-                dropZone.innerHTML = '';
-                const droppedCard = createCard(draggedCardData.type, draggedCardData.text);
-                droppedCard.draggable = false; // Make it non-draggable once dropped
-                droppedCard.style.cursor = 'default';
-                dropZone.appendChild(droppedCard);
-                dropZone.dataset.card = JSON.stringify(draggedCardData);
-
-                // Remove original from pool
-                const cardToRemove = Array.from(answerPoolEl.children).find(c => c.dataset.text === draggedCardData.text && c.dataset.type === draggedCardData.type);
-                if (cardToRemove) cardToRemove.remove();
-            }
-            
-            checkAllZonesFilled();
-        }
-        
-        function checkAllZonesFilled() {
-            const requiredZones = currentMode === 'easy' ? ['synonym', 'region'] : ['synonym', 'region', 'theory'];
-            const allFilled = requiredZones.every(zone => dropZones[zone].dataset.card);
-            validateBtn.disabled = !allFilled;
-        }
-
-        function validateAnswer() {
-            let correct = true;
-            const requiredZones = currentMode === 'easy' ? ['synonym', 'region'] : ['synonym', 'region', 'theory'];
-            
-            requiredZones.forEach(zoneType => {
-                const zone = dropZones[zoneType];
-                const cardData = JSON.parse(zone.dataset.card);
-                
-                let isCorrect = false;
-                if(zoneType === 'theory') {
-                    isCorrect = (currentChallenge.law === cardData.text || currentChallenge.vinification === cardData.text || currentChallenge.terroir === cardData.text);
-                } else {
-                    isCorrect = (currentChallenge[zoneType] === cardData.text);
-                }
-
-                if (!isCorrect) {
-                    correct = false;
-                    zone.firstChild.classList.add('shake', 'border-2', 'border-red-500');
-                    setTimeout(() => {
-                        answerPoolEl.appendChild(createCard(cardData.type, cardData.text));
-                        zone.innerHTML = `<span class="font-semibold text-gray-500">${zone.id.replace('-zone', '')}</span>`;
-                        zone.dataset.card = null;
-                        checkAllZonesFilled();
-                    }, 800);
-                } else {
-                    zone.firstChild.classList.add('border-2', 'border-green-500');
-                }
-            });
-
-            if (correct) {
-                score += 10;
-                messageAreaEl.textContent = 'Correct!';
-                messageAreaEl.className = 'font-semibold text-lg text-green-600';
-                setTimeout(nextChallenge, 1500);
-            } else {
-                score -= 2;
-                messageAreaEl.textContent = 'Not quite...';
-                messageAreaEl.className = 'font-semibold text-lg text-red-600';
-            }
-            updateScore();
-        }
-
         function updateScore() {
             scoreEl.textContent = `Score: ${score}`;
         }
 
-        // Event Listeners
+        // --- Initial Setup ---
         startEasyBtn.addEventListener('click', () => startGame('easy'));
         startHardBtn.addEventListener('click', () => startGame('hard'));
-        validateBtn.addEventListener('click', validateAnswer);
-
-        Object.values(dropZones).forEach(zone => {
-            zone.addEventListener('dragover', handleDragOver);
-            zone.addEventListener('dragleave', handleDragLeave);
-            zone.addEventListener('drop', handleDrop);
-        });
         
-        document.addEventListener('dragend', handleDragEnd);
-
         window.addEventListener('load', showWelcomeModal);
 
     </script>
 </body>
 </html>
-
