@@ -308,6 +308,18 @@
 
         ];
 
+        const regionToCountryMap = {
+            "Monção and Melgaço": "Portugal", "Vinho Verde": "Portugal", "Dão": "Portugal", "Portugal mainland": "Portugal", "Alentejo": "Portugal", "Douro": "Portugal", "Vihno Verde": "Portugal",
+            "Savoie": "France", "Ain, Isère, & Jura": "France", "Saint-Émilion & Pomerol": "France", "Touraine": "France", "Graves": "France", "Médoc": "France", "Jura": "France", "Chablis": "France", "Loire": "France", "Anjou": "France", "Pays Nantais": "France", "Gascogne": "France", "Roussillon": "France", "St. Émilion": "France", "Champagne": "France", "Burgundy": "France", "Alsace": "France", "Isère": "France", "Saint-Pourçain": "France", "Corsica": "France", "Sancerre & Pouilly-Fume": "France", "Southern France": "France", "Languedoc": "France", "France - International name": "France",
+            "Piedmont (historical name)": "Italy", "Orvieto": "Italy", "Sardinia": "Italy", "Sardegna": "Italy", "Liguria": "Italy", "Marche & Umbria": "Italy", "Friuli": "Italy", "Alto Adige": "Italy", "Valle d'Aosta": "Italy", "Novara & Vercelli": "Italy", "Puglia": "Italy", "Veneto": "Italy", "Sudtirol": "Italy", "Montalcino": "Italy", "Montepulciano": "Italy", "Tuscany": "Italy", "Piedmont": "Italy", "Valtellina": "Italy",
+            "Aragon": "Spain", "Rioja": "Spain", "Catalunya": "Spain", "Ribera del Deuro": "Spain", "Castilla-La Mancha": "Spain", "Catalonia": "Spain", "Canary Islands": "Spain", "Galicia": "Spain", "Toro": "Spain",
+            "Vaud": "Switzerland", "Valais": "Switzerland", "Geneva": "Switzerland", "Switzerland - Geneva & Vaud": "Switzerland", "Switzerland & France": "Switzerland",
+            "Austria": "Austria", "Baden & Austria": "Austria",
+            "Germany": "Germany", "Austria & Germany": "Germany", "Baden": "Germany",
+            "Hungary": "Hungary", "USA": "USA", "California": "USA", "China": "China", "Chile": "Chile", "South Africa": "South Africa", "Australia": "Australia", "Croatia": "Croatia", "Slovenia": "Slovenia", "Bulgaria": "Bulgaria", "Romania": "Romania", "Czech Republic & Serbia": "Czech Republic & Serbia", "Argentina": "Argentina", "Uruguay": "Uruguay", "England": "England", "Greece": "Greece", "South America": "South America"
+        };
+        const countryNames = [...new Set(Object.values(regionToCountryMap))];
+
         const primaryData = rawData.reduce((acc, item) => {
             if (!acc[item.primary]) {
                 acc[item.primary] = { synonyms: [] };
@@ -353,6 +365,10 @@
         let roundStage = 'cipher';
         let incorrectSynonymGuessCount = 0;
         let incorrectSynonymGuesses = new Set();
+
+        function getCountry(region) {
+            return regionToCountryMap[region] || null;
+        }
 
         function showWelcomeModal() {
             welcomeModal.classList.remove('hidden');
@@ -501,7 +517,13 @@
             poolTitleEl.textContent = 'Region Pool';
             
             const numHerrings = 5;
-            const herrings = generateHerrings([currentChallenge.contextAnswer], allRegions, numHerrings);
+            const correctCountry = getCountry(currentChallenge.contextAnswer);
+            const filteredRegions = allRegions.filter(region => {
+                const country = getCountry(region);
+                return !country || country !== correctCountry;
+            });
+
+            const herrings = generateHerrings([currentChallenge.contextAnswer], filteredRegions, numHerrings);
             const options = shuffle([currentChallenge.contextAnswer, ...herrings]);
 
             options.forEach(text => {
@@ -538,10 +560,11 @@
 
         function generateHerrings(correctAnswers, sourceArray, count) {
             const herrings = new Set();
-            while (herrings.size < count) {
-                const randomItem = sourceArray[Math.floor(Math.random() * sourceArray.length)];
-                if (!correctAnswers.includes(randomItem)) {
-                    herrings.add(randomItem);
+            const shuffledSource = shuffle([...sourceArray]);
+            for (const item of shuffledSource) {
+                if (herrings.size >= count) break;
+                if (!correctAnswers.includes(item)) {
+                    herrings.add(item);
                 }
             }
             return Array.from(herrings);
