@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sommelier's Grid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+        }
+        .card-container {
+            perspective: 1000px;
+        }
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-face-front {
+            background-color: #4A5568; /* gray-700 */
+            color: white;
+            background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239CA3AF' fill-opacity='0.1'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6H10zM42 26c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6H42z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .card-face-back {
+            background-color: #F7FAFC; /* gray-50 */
+            color: #2D3748; /* gray-800 */
+            transform: rotateY(180deg);
+            border: 1px solid #E2E8F0; /* gray-300 */
+        }
+        .card-type {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .card-content {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .primary-grape { background-color: #C53030; color: white; } /* red-700 */
+        .synonym { background-color: #2B6CB0; color: white; } /* blue-700 */
+        .region { background-color: #2F855A; color: white; } /* green-700 */
+        .theory { background-color: #805AD5; color: white; } /* purple-600 */
+        
+        #game-board {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        /* Responsive grid columns */
+        @media (max-width: 639px) { /* sm */
+            #game-board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (min-width: 640px) and (max-width: 1023px) { /* md */
+            #game-board { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1024px) { /* lg */
+            #game-board { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+        }
+
+        .matched .card-face-back {
+            background-color: #C6F6D5; /* green-200 */
+            border-color: #68D391; /* green-400 */
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .matched .card {
+            cursor: not-allowed;
+        }
+        #message-box {
+            transition: opacity 0.5s, transform 0.5s;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">The Sommelier's Grid</h1>
+            <p class="text-lg text-gray-600 mt-2">Match the Grape to its Synonym, Region, and Theory</p>
+        </header>
+
+        <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="flex items-center space-x-4">
+                    <label for="game-mode" class="font-semibold">Game Mode:</label>
+                    <select id="game-mode" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="easy">Easy (Grape + Synonym + Region)</option>
+                        <option value="hard" selected>Hard (Grape + Synonym + Region + Theory)</option>
+                    </select>
+                </div>
+                <button id="start-game" class="w-full md:w-auto bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    New Game
+                </button>
+                <div id="score" class="font-semibold text-xl">Score: 0</div>
+            </div>
+        </div>
+
+        <div id="game-board" class="mb-6">
+            <!-- Cards will be generated here by JavaScript -->
+        </div>
+
+        <div id="message-box" class="fixed top-5 right-5 bg-white p-4 rounded-lg shadow-lg border-l-4 opacity-0 transform translate-x-12 max-w-sm" role="alert">
+            <p id="message-text" class="font-semibold"></p>
+        </div>
+
+        <footer class="text-center text-gray-500 text-sm mt-8">
+            <p>A study tool based on the data you provided. Good luck!</p>
+        </footer>
+    </div>
+
+    <script>
+        const gameData = [
+            { primary: "Albariño (Spain)", synonym: "Alvarinho", region: "Portugal", law: "Vinho Verde DOC: In Monção e Melgaço, must be 100% Alvarinho.", vinification: "Protective, anaerobic winemaking in stainless steel; lees contact is common.", terroir: "Cool, wet, maritime climate; granite and sandy soils." },
+            { primary: "Altesse", synonym: "Roussette", region: "Savoie", law: "Roussette de Savoie AOP: Must be 100% Altesse. Can be followed by a cru name.", vinification: "Can be fermented in stainless steel or oak; known for aging potential.", terroir: "Steep, well-drained limestone scree slopes in the Alps." },
+            { primary: "Arinto", synonym: "Pederña", region: "Vinho Verde", law: "Vinho Verde DOC: A key blending grape, prized for retaining high acidity.", vinification: "Used in blends to contribute acidity; vinified in stainless steel for freshness.", terroir: "High acidity makes it a reliable performer in the cool, damp climate." },
+            { primary: "Arneis", synonym: "Nebbiolo Bianco", region: "Piedmont historical name", law: "Roero Arneis DOCG: Must be at least 95% Arneis.", vinification: "Modern vinification as a dry white in inert vessels to preserve floral notes.", terroir: "Thrives on sandy, fossil-rich soils of the Roero hills." },
+            { primary: "Cabernet Franc", synonym: "Breton", region: "Touraine", law: "Chinon, Bourgueil, Saumur-Champigny AOPs: Often 100% varietal.", vinification: "Can be light (semi-carbonic) or structured (traditional fermentation, neutral oak).", terroir: "Style dictated by soil: sandy/gravel (lighter) vs. clay-limestone/tuffeau (structured)." },
+            { primary: "Carignan", synonym: "Mazuelo/a", region: "Rioja", law: "Rioja DOCa: A minor blending grape valued for high acidity, color, and tannin.", vinification: "Used in small percentages to add structure and freshness to Tempranillo blends.", terroir: "Late-ripening grape that needs a warm climate; old vines preferred." },
+            { primary: "Carmenère", synonym: "Cabernet Gernischt", region: "China", law: "No strict national appellation system, but a recognized variety.", vinification: "Often made in a Bordeaux style with French oak aging. Can be herbal if not ripe.", terroir: "Arid climates like Ningxia can fully ripen the grape, reducing pyrazines." },
+            { primary: "Chardonnay", synonym: "Beaunois", region: "Chablis", law: "Chablis AOP: Must be 100% Chardonnay. Name 'Beaunois' is a local synonym.", vinification: "Vinified to emphasize purity; typically in stainless steel or neutral oak.", terroir: "Kimmeridgian marl (limestone-clay with fossils) imparts flinty, steely minerality." },
+            { primary: "Chasselas", synonym: "Fendant", region: "Valais", law: "Valais AOP: Fendant is the legally protected name for Chasselas in Valais.", vinification: "Typically fermented in stainless steel or large neutral oak to preserve delicate aromatics.", terroir: "Steep, terraced, south-facing vineyards along the Rhône river." },
+            { primary: "Chenin Blanc", synonym: "Steen", region: "South Africa", law: "Wine of Origin (WO) System: Varietal labels require min. 85%. Old Vine Project certifies vines 35+ years old.", vinification: "Extremely versatile: fresh/unoaked, complex/oaked, sparkling, or sweet.", terroir: "Old bush vines in Swartland & Stellenbosch (granite soils) are prized." },
+            { primary: "Dolcetto", synonym: "Ormeasco", region: "Liguria", law: "Ormeasco di Pornassio DOC: Min. 95% Ormeasco. Can be red, Superiore, or rosato.", vinification: "Fermented in stainless steel to preserve bright cherry fruit and floral notes.", terroir: "High-altitude, terraced vineyards of the Ligurian Alps." },
+            { primary: "Gewürztraminer", synonym: "Traminer", region: "Alto Adige", law: "Alto Adige Traminer Aromatico DOC: Min. 85% Gewürztraminer.", vinification: "Intensely aromatic dry whites fermented in stainless steel or large neutral oak.", terroir: "Calcareous clay and gravel soils at altitude help preserve acidity." },
+            { primary: "Grenache", synonym: "Cannonau", region: "Sardinia", law: "Cannonau di Sardegna DOC: Min. 85% Cannonau. 'Classico' subzone has stricter rules.", vinification: "Riserva requires min. 2 years aging (6 months in oak/chestnut).", terroir: "Thrives in hot, dry Mediterranean climate; often grown as bush vines on sandy/granite soils." },
+            { primary: "Lemberger", synonym: "Blaufränkisch", region: "Austria", law: "Flagship red of Burgenland. DACs include Mittelburgenland, Leithaberg, Eisenberg.", vinification: "Can be fresh/unoaked or serious/structured and aged in large oak or barriques.", terroir: "Leithaberg (limestone/schist) for minerality; Eisenberg (iron-rich) for spice." },
+            { primary: "Macabeo", synonym: "Viura", region: "Rioja", law: "Rioja DOCa: The main white grape for young, fresh whites and traditional, oxidative, barrel-aged whites.", vinification: "Young Viura in steel; traditional aged Viura fermented/aged in American oak.", terroir: "Productive variety; its susceptibility to oxidation is used stylistically." },
+            { primary: "Malbec", synonym: "Côt", region: "Cahors, France", law: "Cahors AOP: Min. 70% Malbec (Côt), blended with Merlot/Tannat.", vinification: "Modern methods manage tannins. Aging in large foudres or smaller barrels.", terroir: "Limestone plateau (Causses) for structure; gravel river terraces for fruitier styles." },
+            { primary: "Mencía (Spain)", synonym: "Jaen", region: "Portugal", law: "Dão DOC: A key red variety, often blended with Touriga Nacional.", vinification: "Contributes bright red fruit, high acidity, and floral notes to Dão blends.", terroir: "Grown on the high-altitude granite plateau of the Dão." },
+            { primary: "Mondeuse Noire", synonym: "Grosse Syrah", region: "Jura", law: "Local synonym, not related to Syrah. Permitted in Arbois AOP.", vinification: "Produces deeply colored, aromatic red wines with high acidity and firm tannins.", terroir: "Grown on the marl and limestone soils of the Jura." },
+            { primary: "Mourvèdre (France)", synonym: "Monastrell", region: "Spain", law: "Dominant red in DOs like Jumilla, Yecla, Alicante.", vinification: "Can be powerful, high-alcohol single-varietal red, or used in blends/rosé.", terroir: "Perfectly adapted to hot, arid climate; often ungrafted bush vines in sandy soils." },
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Moscato Bianco", region: "Italy", law: "The grape of Asti Spumante DOCG and Moscato d'Asti DOCG.", vinification: "For Moscato d'Asti, fermentation is halted to retain sweetness and create a frizzante style.", terroir: "Thrives on calcareous marl soils of the Asti region in Piedmont." },
+            { primary: "Muscat of Alexandria", synonym: "Zibibbo", region: "Sicily", law: "Passito di Pantelleria DOC: Must be 100% Zibibbo, from dried grapes.", vinification: "Vinified as a sweet passito wine; can also be a dry, aromatic white.", terroir: "Grown on windy, volcanic island of Pantelleria, often in hollows for protection." },
+            { primary: "Nebbiolo", synonym: "Spanna", region: "Novara & Vercelli", law: "Gattinara & Ghemme DOCGs: Nebbiolo (Spanna) is the principal grape.", vinification: "Requires long aging, traditionally in large, neutral oak casks, to soften tannins.", terroir: "Cooler foothills of the Alps on acidic, mineral-rich soils." },
+            { primary: "Palomino Fino", synonym: "Listán Blanco", region: "Canary Islands", law: "Main grape for dry whites, e.g., in Ycoden-Daute-Isora DO.", vinification: "Vinified as a dry, still white wine, often with pronounced saline/mineral character.", terroir: "Ungrafted vines on dark volcanic soils, often trained in *cordón trenzado* style." },
+            { primary: "Petite Sirah", synonym: "Durif", region: "France", law: "Original name; a crossing of Syrah & Peloursin. Very rare in France now.", vinification: "Produces deeply colored, highly tannic wines.", terroir: "Tight bunches are susceptible to rot, which is why it failed in France." },
+            { primary: "Pinot Blanc", synonym: "Weissburgunder", region: "Germany", law: "Can be Qualitätswein or Prädikatswein. Top dry examples are VDP Grosses Gewächs (GG).", vinification: "Can be fresh (steel) or richer (large neutral oak, *Stückfass*).", terroir: "Thrives in warmer regions like Baden and Pfalz on limestone or loess soils." },
+            { primary: "Pinot Gris", synonym: "Pinot Grigio", region: "Italy", law: "Pinot Grigio delle Venezie DOC is the most common. Higher quality from Friuli/Alto Adige.", vinification: "Mass-market style is simple/fruity (steel). Quality versions may see lees contact.", terroir: "Veneto plains for high yields; hills of Friuli/Alto Adige for complexity." },
+            { primary: "Pinot Noir", synonym: "Spätburgunder", region: "Austria & Germany", law: "Most important red in Germany (Baden, Ahr).", vinification: "Has evolved from light/earthy to powerful, Burgundy-like styles aged in barriques.", terroir: "Ahr (steep slate slopes); Baden (limestone/volcanic soils of Kaiserstuhl)." },
+            { primary: "Riesling", synonym: "Rhine Riesling", region: "Australia & EU", law: "Official name in many EU countries. Historical name in Australia.", vinification: "In Clare/Eden Valleys, made bone-dry, fermented in steel to preserve lime/citrus notes.", terroir: "Slate soils and continental climate of Clare/Eden Valleys retain acidity." },
+            { primary: "Roussanne", synonym: "Bergeron", region: "Savoie", law: "Chignin-Bergeron AOP: Must be 100% Roussanne.", vinification: "Full-bodied, aromatic wines with notes of apricot, honey, and nuts. Can age well.", terroir: "South-facing limestone scree slopes of the village of Chignin." },
+            { primary: "Sangiovese", synonym: "Morellino", region: "Maremma", law: "Morellino di Scansano DOCG: Must be min. 85% Sangiovese.", vinification: "Typically fresher, more approachable style than Brunello, often with less oak.", terroir: "Coastal Maremma; maritime influence and sandy soils lead to softer tannins." },
+            { primary: "Sauvignon Blanc", synonym: "Fumé Blanc", region: "Sancerre & Pouilly-Fume", law: "A producer term. In Pouilly-Fumé, local term is Blanc Fumé. Pouilly-Fumé AOP is 100% Sauvignon Blanc.", vinification: "Vinified to express terroir, typically in stainless steel or neutral oak.", terroir: "Famous for *silex* (flint) soils, imparting a smoky, gunflint aroma." },
+            { primary: "Sémillon", synonym: "Hunter River Riesling", region: "Australia", law: "Historical misnomer from the Hunter Valley. Not related to Riesling.", vinification: "Harvested early, fermented in steel, bottled young. Ages for decades, developing toast/honey notes.", terroir: "Warm, humid climate; early harvesting preserves acidity for longevity." },
+            { primary: "Tannat", synonym: "Harriague", region: "Uruguay", law: "The country's signature red grape.", vinification: "Modern winemaking manages tannins with micro-oxygenation and blending. Often oaked.", terroir: "Well-suited to the damp, clay-rich soils and maritime climate." },
+            { primary: "Tempranillo", synonym: "Tinta Roriz", region: "Douro", law: "A key grape for both dry Douro DOC reds and fortified Port.", vinification: "In Port, it adds structure/color. In dry reds, it provides elegant red fruit/firm tannins.", terroir: "Grown on steep, terraced schist slopes of the Douro Valley." },
+            { primary: "Tibouren (Provence)", synonym: "Rossese di Dolceacqua", region: "Liguria", law: "Rossese di Dolceacqua DOC: Min. 95% Rossese.", vinification: "Produces pale, fragrant red wines with notes of rose and strawberry. Vinified to preserve aromatics.", terroir: "Grown in the far west of Liguria; genetically identical to Tibouren." },
+            { primary: "Trebbiano Toscano", synonym: "Ugni Blanc", region: "France, Croatia, & Uruguay", law: "Primary grape for Cognac and Armagnac.", vinification: "For brandy, prized for high acidity and neutral flavor profile.", terroir: "A very productive, hardy, and disease-resistant workhorse variety." },
+            { primary: "Trollinger (Württemberg)", synonym: "Schiava Grossa", region: "Italy", law: "Grown in Alto Adige. Used in Santa Maddalena DOC.", vinification: "Produces light, fruity red wines with low tannins. Best served slightly chilled.", terroir: "Santa Maddalena is a blend of Schiava with a small amount of Lagrein." },
+            { primary: "Trousseau", synonym: "Bastardo", region: "Portugal", law: "A permitted grape in Port, though now rare.", vinification: "Adds red fruit and alcohol to blends. Ripens quickly with high sugar.", terroir: "Early-ripening grape that thrives in hot climates." },
+            { primary: "Verdicchio", synonym: "Trebbiano di Soave", region: "Veneto", law: "A permitted grape in Soave DOC, though Garganega is primary.", vinification: "Can add acidity and a bitter almond note to Soave blends.", terroir: "Less common now in Soave as growers have focused on Garganega." },
+            { primary: "Vermentino", synonym: "Pigato", region: "Liguria", law: "Considered a distinct biotype. Riviera Ligure di Ponente DOC can be labeled as Pigato.", vinification: "Produces aromatic, saline white wines, slightly more bitter than standard Vermentino.", terroir: "Name from 'pigato' (spotted). Thrives in the coastal Ligurian climate." },
+            { primary: "Welschriesling", synonym: "Olaszrizling", region: "Hungary", law: "A workhorse grape. Used for simple dry whites and as a key component in Tokaji blends.", vinification: "As dry wine, often neutral/crisp. In Tokaji, susceptible to noble rot.", terroir: "A reliable, high-yielding grape not related to Rhine Riesling." },
+            { primary: "Xarel·lo", synonym: "Pansa Blanca", region: "Catalunya", law: "Alella DO: The local name for Xarel·lo. Used for still, dry white wines.", vinification: "Produces aromatic, textured white wines with good body and aging potential.", terroir: "Alella DO is known for its unique sandy granite soil called *sauló*." },
+            { primary: "Zinfandel", synonym: "Primitivo", region: "Italy", law: "Primitivo di Manduria DOC: Min. 85% Primitivo.", vinification: "Name refers to early-ripening. Can be fresh/unoaked or powerful/oaked.", terroir: "Thrives in hot, dry climate on *terra rossa* soils. Often grown as *alberello*." }
+        ];
+
+        const gameBoard = document.getElementById('game-board');
+        const startGameBtn = document.getElementById('start-game');
+        const gameModeSelect = document.getElementById('game-mode');
+        const scoreEl = document.getElementById('score');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        let flippedCards = [];
+        let matchedCards = [];
+        let score = 0;
+        let canFlip = true;
+        let currentChainGrape = null;
+        let chainMatchSets = [];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createCard(cardData, type) {
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'card-container h-32 md:h-36';
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.id = cardData.id;
+            card.dataset.type = type;
+            card.dataset.primary = cardData.primary;
+
+            const cardFaceFront = document.createElement('div');
+            cardFaceFront.className = 'card-face card-face-front';
+            cardFaceFront.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M16.5 6.5C15 5.3 13.3 4.5 11.5 4.5C8.5 4.5 6 6.7 6 9.7C6 11.4 6.8 12.9 8 13.9L8.2 14.1C9.6 15.2 10 17 10 18.5V20M14 20V18.5C14 17 14.4 15.2 15.8 14.1L16 13.9C17.2 12.9 18 11.4 18 9.7C18 8.1 17.4 6.8 16.5 6.5ZM10 4C10 2.9 10.9 2 12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4Z"></path></svg>`;
+
+            const cardFaceBack = document.createElement('div');
+            cardFaceBack.className = 'card-face card-face-back';
+            
+            const typeEl = document.createElement('div');
+            typeEl.className = `card-type ${type}`;
+            typeEl.textContent = type.replace('-', ' ');
+
+            const contentEl = document.createElement('div');
+            contentEl.className = 'card-content';
+            contentEl.textContent = cardData[type];
+
+            cardFaceBack.appendChild(typeEl);
+            cardFaceBack.appendChild(contentEl);
+
+            card.appendChild(cardFaceFront);
+            card.appendChild(cardFaceBack);
+            cardContainer.appendChild(card);
+            
+            card.addEventListener('click', () => flipCard(card));
+            return cardContainer;
+        }
+
+        function startGame() {
+            const mode = gameModeSelect.value;
+            score = 0;
+            updateScore();
+            gameBoard.innerHTML = '';
+            flippedCards = [];
+            matchedCards = [];
+            currentChainGrape = null;
+            chainMatchSets = [];
+
+            const numSets = mode === 'easy' ? 6 : 4;
+            const shuffledData = shuffle([...gameData]);
+            const gameSets = shuffledData.slice(0, numSets);
+            
+            let cardsToCreate = [];
+            gameSets.forEach((item, index) => {
+                const theoryTypes = ['law', 'vinification', 'terroir'];
+                const randomTheoryType = shuffle(theoryTypes)[0];
+                
+                const cardSet = {
+                    id: index,
+                    primary: item.primary,
+                    synonym: item.synonym,
+                    region: item.region,
+                    theory: item[randomTheoryType]
+                };
+
+                cardsToCreate.push({ ...cardSet, type: 'primary-grape' });
+                cardsToCreate.push({ ...cardSet, type: 'synonym' });
+                cardsToCreate.push({ ...cardSet, type: 'region' });
+                if (mode === 'hard') {
+                    cardsToCreate.push({ ...cardSet, type: 'theory' });
+                }
+            });
+            
+            shuffle(cardsToCreate).forEach(cardInfo => {
+                const cardElement = createCard(cardInfo, cardInfo.type);
+                gameBoard.appendChild(cardElement);
+            });
+        }
+
+        function flipCard(card) {
+            if (!canFlip || card.classList.contains('is-flipped') || matchedCards.includes(card.dataset.id + card.dataset.type)) return;
+
+            card.classList.add('is-flipped');
+            flippedCards.push(card);
+
+            const mode = gameModeSelect.value;
+            const requiredMatches = mode === 'easy' ? 3 : 4;
+
+            if (flippedCards.length === requiredMatches) {
+                canFlip = false;
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            const firstCard = flippedCards[0];
+            const primaryGrapeName = firstCard.dataset.primary;
+
+            const isMatch = flippedCards.every(card => card.dataset.primary === primaryGrapeName);
+            const isSetComplete = new Set(flippedCards.map(c => c.dataset.type)).size === flippedCards.length;
+
+            if (isMatch && isSetComplete) {
+                handleCorrectMatch();
+            } else {
+                handleIncorrectMatch();
+            }
+        }
+        
+        function handleCorrectMatch() {
+            score += 10;
+            updateScore();
+            showMessage('Correct Match!', 'border-green-500');
+
+            const primaryCard = flippedCards.find(c => c.dataset.type === 'primary-grape');
+            const primaryGrapeName = primaryCard.dataset.primary;
+
+            // Chain Match Logic for Hard Mode
+            if (gameModeSelect.value === 'hard') {
+                 if (!currentChainGrape) {
+                    currentChainGrape = primaryGrapeName;
+                    const allSynonymsForGrape = gameData.filter(item => item.primary === primaryGrapeName);
+                    if (allSynonymsForGrape.length > 1) {
+                        showMessage(`Chain Match Started for ${primaryGrapeName}!`, 'border-blue-500');
+                    }
+                }
+            }
+
+            flippedCards.forEach(card => {
+                card.parentElement.classList.add('matched');
+                matchedCards.push(card.dataset.id + card.dataset.type);
+                // In hard mode with chain matching, flip the primary grape back over
+                if (gameModeSelect.value === 'hard' && card.dataset.type === 'primary-grape' && currentChainGrape === primaryGrapeName) {
+                     setTimeout(() => {
+                        card.classList.remove('is-flipped');
+                        card.parentElement.classList.remove('matched');
+                        const index = matchedCards.indexOf(card.dataset.id + card.dataset.type);
+                        if (index > -1) matchedCards.splice(index, 1);
+                     }, 1200);
+                }
+            });
+
+            flippedCards = [];
+            canFlip = true;
+            checkWinCondition();
+        }
+
+        function handleIncorrectMatch() {
+            score -= 2;
+            updateScore();
+            showMessage('Incorrect. Try again.', 'border-red-500');
+
+            setTimeout(() => {
+                flippedCards.forEach(card => card.classList.remove('is-flipped'));
+                flippedCards = [];
+                canFlip = true;
+            }, 1500);
+        }
+
+        function checkWinCondition() {
+            const totalCards = gameBoard.children.length;
+            if (matchedCards.length === totalCards) {
+                showMessage(`You've matched all the grapes! Final Score: ${score}`, 'border-yellow-400', 5000);
+            }
+        }
+
+        function updateScore() {
+            scoreEl.textContent = `Score: ${score}`;
+        }
+
+        function showMessage(text, borderColor, duration = 2000) {
+            messageText.textContent = text;
+            messageBox.className = `fixed top-5 right-5 bg-white p-4 rounded-lg shadow-lg border-l-4 opacity-100 transform translate-x-0 max-w-sm ${borderColor}`;
+            
+            setTimeout(() => {
+                messageBox.className = messageBox.className.replace('opacity-100 translate-x-0', 'opacity-0 translate-x-12');
+            }, duration);
+        }
+
+        startGameBtn.addEventListener('click', startGame);
+        gameModeSelect.addEventListener('change', startGame);
+
+        // Initial game start
+        startGame();
+    </script>
+</body>
+</html>
+
