@@ -112,82 +112,197 @@
 
     <script>
         const rawData = [
-            { primary: "Albariño (Spain)", synonym: "Alvarinho", region: "Portugal" },
-            { primary: "Altesse", synonym: "Roussette", region: "Savoie" },
-            { primary: "Arinto", synonym: "Pederña", region: "Vinho Verde" },
-            { primary: "Arneis", synonym: "Nebbiolo Bianco", region: "Piedmont historical name" },
-            { primary: "Blauer Portugieser", synonym: "Kékoportó", region: "Hungary" },
-            { primary: "Boal", synonym: "Malvasia Fina", region: "Dão" },
-            { primary: "Bonarda (Argentina)", synonym: "Charbono", region: "USA" },
-            { primary: "Bonarda (Argentina)", synonym: "Corbeau", region: "Ain, Isère, & Jura" },
-            { primary: "Bonarda (Argentina)", synonym: "Douce Noire", region: "Savoie" },
-            { primary: "Cabernet Franc", synonym: "Bouchet Franc or Gros Bouchet", region: "Right Bank BDX" },
-            { primary: "Cabernet Franc", synonym: "Breton", region: "Touraine" },
-            { primary: "Cabernet Sauvignon", synonym: "Bouchet or Petit Bouchet", region: "Right Bank BDX" },
-            { primary: "Cabernet Sauvignon", synonym: "Vidure or Petite Vidure", region: "Graves" },
-            { primary: "Canaiolo Bianco (Tuscany)", synonym: "Drupeggio", region: "Orvieto" },
-            { primary: "Carignan", synonym: "Bovale Grande", region: "Sardinia" },
-            { primary: "Carignan", synonym: "Carignano", region: "Italy" },
-            { primary: "Carignan", synonym: "Mazuelo/a", region: "Rioja" },
-            { primary: "Carignan", synonym: "Samsó", region: "Catalunya" },
-            { primary: "Carmenère", synonym: "Cabernet Gernischt", region: "China" },
-            { primary: "Chardonnay", synonym: "Gamay Blanc", region: "Jura" },
-            { primary: "Chardonnay", synonym: "Morillon", region: "Austria" },
-            { primary: "Chardonnay", synonym: "Beaunois", region: "Chablis" },
-            { primary: "Chasselas", synonym: "Fendant", region: "Valais" },
-            { primary: "Chenin Blanc", synonym: "Pineau de la Loire", region: "Loire" },
-            { primary: "Chenin Blanc", synonym: "Steen", region: "South Africa" },
-            { primary: "Dolcetto", synonym: "Ormeasco", region: "Liguria" },
-            { primary: "Fer Servadou", synonym: "Braucol", region: "Gaillac" },
-            { primary: "Frühburgunder (Germany)", synonym: "Pinot Noir Précoce", region: "France" },
-            { primary: "Furmint", synonym: "Šipon", region: "Slovenia" },
-            { primary: "Garganega (Veneto)", synonym: "Grecanico Dorato", region: "Sicily" },
-            { primary: "Gewürztraminer", synonym: "Traminer", region: "Alto Adige" },
-            { primary: "Grenache", synonym: "Cannonau", region: "Sardinia" },
-            { primary: "Grenache", synonym: "Garnacha Tinta", region: "Spain" },
-            { primary: "Inzolia (Sicily)", synonym: "Ansonica", region: "Tuscany" },
-            { primary: "Lemberger", synonym: "Blaufränkisch", region: "Austria" },
-            { primary: "Lemberger", synonym: "Kékfrankos", region: "Hungary" },
-            { primary: "Macabeo", synonym: "Viura", region: "Rioja" },
-            { primary: "Malbec", synonym: "Côt", region: "Loire" },
-            { primary: "Malbec", synonym: "Pressac", region: "St. Émilion" },
-            { primary: "Mencía (Spain)", synonym: "Jaen", region: "Portugal" },
-            { primary: "Mission (U.S.)", synonym: "País", region: "Chile" },
-            { primary: "Mondeuse Noire", synonym: "Grosse Syrah", region: "Jura" },
-            { primary: "Mourvèdre (France)", synonym: "Mataró", region: "Catalonia" },
-            { primary: "Mourvèdre (France)", synonym: "Monastrell", region: "Spain" },
-            { primary: "Muscat Blanc À Petits Grains", synonym: "Moscato Bianco", region: "Italy" },
-            { primary: "Muscat of Alexandria", synonym: "Zibibbo", region: "Sicily" },
-            { primary: "Nebbiolo", synonym: "Chiavennasca", region: "Valtellina" },
-            { primary: "Nebbiolo", synonym: "Spanna", region: "Novara & Vercelli" },
-            { primary: "Nero d'Avola", synonym: "Calabrese", region: "Sicily" },
-            { primary: "Palomino Fino", synonym: "Listán Blanco", region: "Canary Islands" },
-            { primary: "Petite Sirah", synonym: "Durif", region: "France" },
-            { primary: "Pinot Blanc", synonym: "Weissburgunder", region: "Germany" },
-            { primary: "Pinot Gris", synonym: "Pinot Grigio", region: "Italy" },
-            { primary: "Pinot Meunier", synonym: "Müllerrebe", region: "Germany" },
-            { primary: "Pinot Noir", synonym: "Spätburgunder", region: "Austria & Germany" },
-            { primary: "Riesling", synonym: "Rhine Riesling", region: "Australia & EU" },
-            { primary: "Roussanne", synonym: "Bergeron", region: "Savoie" },
-            { primary: "Sangiovese", synonym: "Brunello", region: "Montalcino" },
-            { primary: "Sangiovese", synonym: "Morellino", region: "Maremma" },
-            { primary: "Sangiovese", synonym: "Nielluccio", region: "Corsica" },
-            { primary: "Sauvignon Blanc", synonym: "Fumé Blanc", region: "Sancerre & Pouilly-Fume" },
-            { primary: "Sémillon", synonym: "Hunter River Riesling", region: "Australia" },
-            { primary: "Tannat", synonym: "Harriague", region: "Uruguay" },
-            { primary: "Tempranillo", synonym: "Aragonez", region: "Alentejo" },
-            { primary: "Tempranillo", synonym: "Cencibel", region: "La Mancha" },
-            { primary: "Tempranillo", synonym: "Tinta Roriz", region: "Douro" },
-            { primary: "Tempranillo", synonym: "Tinto de Toro", region: "Toro" },
-            { primary: "Tibouren (Provence)", synonym: "Rossese di Dolceacqua", region: "Liguria" },
-            { primary: "Trebbiano Toscano", synonym: "Ugni Blanc", region: "France, Croatia, & Uruguay" },
-            { primary: "Trollinger (Württemberg)", synonym: "Schiava Grossa", region: "Italy" },
-            { primary: "Trousseau", synonym: "Bastardo", region: "Portugal" },
-            { primary: "Verdicchio", synonym: "Trebbiano di Soave", region: "Veneto" },
-            { primary: "Vermentino", synonym: "Pigato", region: "Liguria" },
-            { primary: "Welschriesling", synonym: "Olaszrizling", region: "Hungary" },
-            { primary: "Xarel·lo", synonym: "Pansa Blanca", region: "Catalunya" },
+            { primary: "Albariño (Spain)", synonym: "Alvarinho", region: "Portugal" }
+            { primary: "Altesse", synonym: "Roussette", region: "Savoie" }
+            { primary: "Arinto", synonym: "Pederña", region: "Vinho Verde" }
+            { primary: "Arneis", synonym: "Nebbiolo Bianco", region: "Piedmont historical name" }
+            { primary: "Blauer Portugieser", synonym: "Kékoportó", region: "Hungary" }
+            { primary: "Boal", synonym: "Malvasia Fina", region: "Dão" }
+            { primary: "Bonarda (Argentina)", synonym: "Charbono", region: "USA" }
+            { primary: "Bonarda (Argentina)", synonym: "Corbeau", region: "Ain, Isère, & Jura" }
+            { primary: "Bonarda (Argentina)", synonym: "Douce Noire", region: "Savoie" }
+            { primary: "Cabernet Franc", synonym: "Bouchet Franc or Gros Bouchet", region: "Right Bank BDX" }
+            { primary: "Cabernet Franc", synonym: "Breton", region: "Touraine" }
+            { primary: "Cabernet Franc", synonym: "Grosse Vidure", region: "Graves" }
+            { primary: "Cabernet Sauvignon", synonym: "Bouchet or Petit Bouchet", region: "Right Bank BDX" }
+            { primary: "Cabernet Sauvignon", synonym: "Vidure or Petite Vidure", region: "Graves" }
+            { primary: "Canaiolo Bianco (Tuscany)", synonym: "Drupeggio", region: "Orvieto" }
+            { primary: "Carignan", synonym: "Bovale Grande", region: "Sardinia" }
+            { primary: "Carignan", synonym: "Carignano", region: "Italy" }
+            { primary: "Carignan", synonym: "Carinyena", region: "Aragon" }
+            { primary: "Carignan", synonym: "Cariñena", region: "Aragon" }
+            { primary: "Carignan", synonym: "Mazuelo/a", region: "Rioja" }
+            { primary: "Carignan", synonym: "Samsó", region: "Catalunya" }
+            { primary: "Carmenère", synonym: "Grosse Vidure", region: "Médoc" }
+            { primary: "Carmenère", synonym: "Grand Vidure", region: "France" }
+            { primary: "Carmenère", synonym: "Cabernet Gernischt", region: "China" }
+            { primary: "Chardonnay", synonym: "Gamay Blanc", region: "Jura" }
+            { primary: "Chardonnay", synonym: "Feinburgunder", region: "Austria & Germany" }
+            { primary: "Chardonnay", synonym: "Melon d'Arbois", region: "Jura" }
+            { primary: "Chardonnay", synonym: "Morillon", region: "Austria" }
+            { primary: "Chardonnay", synonym: "Beaunois", region: "Chablis" }
+            { primary: "Chasselas", synonym: "Chasselas Doré", region: "Switzerland & France" }
+            { primary: "Chasselas", synonym: "Corinto", region: "Chile" }
+            { primary: "Chasselas", synonym: "Dorin", region: "Vaud" }
+            { primary: "Chasselas", synonym: "Fendant", region: "Valais" }
+            { primary: "Chasselas", synonym: "Gutedel", region: "Austria, Germany, & Switzerland" }
+            { primary: "Chasselas", synonym: "Perlan", region: "Geneva" }
+            { primary: "Chenin Blanc", synonym: "Pineau de la Loire", region: "Loire" }
+            { primary: "Chenin Blanc", synonym: "Steen", region: "South Africa" }
+            { primary: "Chenin Blanc", synonym: "Pineau d'Anjou", region: "Anjou" }
+            { primary: "Crouchen", synonym: "Clare Riesling", region: "Australia" }
+            { primary: "Crouchen", synonym: "Cape Riesling", region: "South Africa" }
+            { primary: "Dolcetto", synonym: "Ormeasco", region: "Liguria" }
+            { primary: "Fer Servadou", synonym: "Braucol", region: "Gaillac" }
+            { primary: "Fer Servadou", synonym: "Pinenc", region: "Madiran" }
+            { primary: "Fer Servadou", synonym: "Fer", region: "Marcillac" }
+            { primary: "Folle Blanche", synonym: "Gros Plant", region: "Pays Nantais" }
+            { primary: "Folle Blanche", synonym: "Picquepoul (not de Pinet)", region: "Gascogne" }
+            { primary: "Frühburgunder (Germany)", synonym: "Pinot Noir Précoce", region: "France" }
+            { primary: "Furmint", synonym: "Moslavac", region: "Croatia" }
+            { primary: "Furmint", synonym: "Mosler", region: "Austria" }
+            { primary: "Furmint", synonym: "Šipon", region: "Slovenia" }
+            { primary: "Garganega (Veneto)", synonym: "Grecanico Dorato", region: "Sicily" }
+            { primary: "Gewürztraminer", synonym: "Heida Savagnin", region: "" }
+            { primary: "Gewürztraminer", synonym: "Traminer", region: "Alto Adige" }
+            { primary: "Gewürztraminer", synonym: "Savagnin Rosé Aromatique", region: "Australia" }
+            { primary: "Grenache", synonym: "Cannonau", region: "Sardinia" }
+            { primary: "Grenache", synonym: "Garnacha", region: "Ribera del Deuro" }
+            { primary: "Grenache", synonym: "Garnacha Tinta", region: "Spain" }
+            { primary: "Grenache", synonym: "Garnatxa", region: "Catalunya" }
+            { primary: "Grenache", synonym: "Lladoner", region: "Catalunya" }
+            { primary: "Grenache", synonym: "Vernaccia Nera", region: "Marche & Umbria" }
+            { primary: "Inzolia (Sicily)", synonym: "Ansonica", region: "Tuscany" }
+            { primary: "Kadarka (Hungary)", synonym: "Gamza", region: "Bulgaria" }
+            { primary: "Lemberger", synonym: "Blaufränkisch", region: "Austria" }
+            { primary: "Lemberger", synonym: "Burgund Mare", region: "Romania" }
+            { primary: "Lemberger", synonym: "Frankovka", region: "Czech Republic & Serbia" }
+            { primary: "Lemberger", synonym: "Franconia", region: "Italy" }
+            { primary: "Lemberger", synonym: "Kékfrankos", region: "Hungary" }
+            { primary: "Macabeo", synonym: "Maccabeu", region: "Roussillon" }
+            { primary: "Macabeo", synonym: "Viura", region: "Rioja" }
+            { primary: "Malbec", synonym: "Côt", region: "Loire" }
+            { primary: "Malbec", synonym: "Pressac", region: "St. Émilion" }
+            { primary: "Mencía (Spain)", synonym: "Jaen", region: "Portugal" }
+            { primary: "Mission (U.S.)", synonym: "Criolla Chica", region: "Argentina" }
+            { primary: "Mission (U.S.)", synonym: "Listán Prieto", region: "Spain" }
+            { primary: "Mission (U.S.)", synonym: "País", region: "Chile" }
+            { primary: "Mondeuse noire", synonym: "Grosse Syrah", region: "Jura" }
+            { primary: "Mondeuse noire", synonym: "Gros Rouge", region: "Switzerland" }
+            { primary: "Mourvèdre (France)", synonym: "Mataró", region: "Catalonia" }
+            { primary: "Mourvèdre (France)", synonym: "Monastrell", region: "Spain" }
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Gelber Muskateller", region: "Germany" }
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Moscato Bianco", region: "Italy" }
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Moscato d'Asti", region: "Piedmont" }
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Muscat Canelli", region: "USA" }
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Muscat d'Alsace", region: "Alsace" }
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Muscat de Frontignan", region: "Languedoc" }
+            { primary: "Muscat Blanc À Petits Grains", synonym: "Sárga Muskotály", region: "Hungary" }
+            { primary: "Muscat of Alexandria", synonym: "Hanepoot", region: "South Africa" }
+            { primary: "Muscat of Alexandria", synonym: "Moscatel", region: "South America" }
+            { primary: "Muscat of Alexandria", synonym: "Muscatel de Setúbal", region: "Portugal" }
+            { primary: "Muscat of Alexandria", synonym: "Muscat Romain", region: "Roussillon" }
+            { primary: "Muscat of Alexandria", synonym: "Zibibbo", region: "Sicily" }
+            { primary: "Nebbiolo", synonym: "Chiavennasca", region: "Valtellina" }           { primary: "Nebbiolo", synonym: "Picoutener", region: "Valle d'Aosta" }
+            { primary: "Nebbiolo", synonym: "Spanna", region: "Novara & Vercelli" }
+            { primary: "Nero d'Avola", synonym: "Calabrese", region: "Sicily" }
+            { primary: "Nero di Troia", synonym: "Sumarello", region: "Puglia" }
+            { primary: "Nero di Troia", synonym: "Uva di Troia", region: "Puglia" }
+            { primary: "Palomino Fino", synonym: "Listán Blanco", region: "Canary Islands" }
+            { primary: "Petite Syrah", synonym: "Durif", region: "France" }
+            { primary: "Petite Syrah", synonym: "Petite Sirah", region: "California" }
+            { primary: "Pinot Blanc", synonym: "Clevner/Klävner", region: "Alsace" }
+            { primary: "Pinot Blanc", synonym: "Pinot Bianco", region: "Denver" }
+            { primary: "Pinot Blanc", synonym: "Weissburgunder", region: "Germany" }
+            { primary: "Pinot Gris", synonym: "Fromenteau", region: "Champagne" }
+            { primary: "Pinot Gris", synonym: "Grauburgunder", region: "Austria & Germany" }
+            { primary: "Pinot Gris", synonym: "Malvoisie", region: "Loire, Savoie, & Switzerland" }
+            { primary: "Pinot Gris", synonym: "Pinot Beurot", region: "Burgundy" }
+            { primary: "Pinot Gris", synonym: "Pinot Grigio", region: "Italy" }
+            { primary: "Pinot Gris", synonym: "Ruländer", region: "Baden & Austria" }
+            { primary: "Pinot Gris", synonym: "Sivi Pinot", region: "Slovenia" }
+            { primary: "Pinot Gris", synonym: "Szürkebarát", region: "Hungary" }
+            { primary: "Pinot Gris", synonym: "Tokay", region: "Alsace" }
+            { primary: "Pinot Meunier", synonym: "Meunier", region: "Champagne" }
+            { primary: "Pinot Meunier", synonym: "Müllerrebe", region: "Germany" }
+            { primary: "Pinot Meunier", synonym: "Schwarzriesling", region: "Baden" }
+            { primary: "Pinot Noir", synonym: "Auvernat", region: "Champagne & Baden" }
+            { primary: "Pinot Noir", synonym: "Blauburgunder", region: "Austria, Germany, & Switzerland" }
+            { primary: "Pinot Noir", synonym: "Blauer Spätburgunder", region: "Austria, Germany, & Switzerland" }
+            { primary: "Pinot Noir", synonym: "Cortaillod", region: "Switzerland" }
+            { primary: "Pinot Noir", synonym: "Clevner", region: "Switzerland" }
+            { primary: "Pinot Noir", synonym: "Morillon", region: "Burgundy" }
+            { primary: "Pinot Noir", synonym: "Pinot Nero", region: "Italy" }
+            { primary: "Pinot Noir", synonym: "Spätburgunder", region: "Austria & Germany" }
+            { primary: "Pinot Noir", synonym: "Savagnin Noir", region: "Jura" }
+            { primary: "Riesling", synonym: "Rhine Riesling", region: "Australia & EU" }
+            { primary: "Riesling", synonym: "Riesling Renano", region: "Italy" }
+            { primary: "Riesling", synonym: "White Riesling", region: "USA" }
+            { primary: "Roussanne", synonym: "Bergeron", region: "Savoie" }
+            { primary: "Roussanne", synonym: "Fromenteau", region: "Isère" }
+            { primary: "Sacy", synonym: "Tressallier", region: "Saint-Pourçain" }
+            { primary: "Sangiovese", synonym: "Brunello", region: "Montalcino" }
+            { primary: "Sangiovese", synonym: "Morellino", region: "Maremma" }
+            { primary: "Sangiovese", synonym: "Nielluccio", region: "Corsica" }
+            { primary: "Sangiovese", synonym: "Prugnolo Gentile", region: "Montepulciano" }
+            { primary: "Sauvignon Blanc", synonym: "Fumé Blanc", region: "Sancerre & Pouilly-Fume" }
+            { primary: "Sauvignon Blanc", synonym: "Muskat-Silvaner", region: "Austria & Germany" }
+            { primary: "Sauvignonasse", synonym: "Friulano", region: "Italy" }
+            { primary: "Sauvignonasse", synonym: "Sauvignon Vert", region: "Chile" }
+            { primary: "Sauvignonasse", synonym: "Tocai Friulano", region: "Friuli" }
+            { primary: "Sauvignonasse", synonym: "Previously believed to be Sauvignon Blanc", region: "Chile" }
+            { primary: "Scheurebe", synonym: "Sämling 88", region: "Austria" }
+            { primary: "Sercial", synonym: "Esgana Cão", region: "Portugal mainland" }
+            { primary: "Sémillon", synonym: "Blanc Doux", region: "France" }
+            { primary: "Sémillon", synonym: "Hunter River Riesling", region: "Australia" }
+            { primary: "Sémillon", synonym: "Greengrape", region: "South Africa" }
+            { primary: "Tannat", synonym: "Harriague", region: "Uruguay" }
+            { primary: "Tempranillo", synonym: "Aragonez", region: "Alentejo" }
+            { primary: "Tempranillo", synonym: "Cencibel", region: "La Mancha" }
+            { primary: "Tempranillo", synonym: "Tempranilla", region: "Spain" }
+            { primary: "Tempranillo", synonym: "Tinta Roriz", region: "Douro" }
+            { primary: "Tempranillo", synonym: "Tinto del País", region: "Ribera del Deuro" }
+            { primary: "Tempranillo", synonym: "Tinto de Toro", region: "Toro" }
+            { primary: "Tempranillo", synonym: "Tinto Fino", region: "Ribera del Deuro" }
+            { primary: "Tempranillo", synonym: "Ull de Llebre", region: "Catalunya" }
+            { primary: "Tibouren (Provence)", synonym: "Rossese di Dolceacqua", region: "Liguria" }
+            { primary: "Tinta Negra (Madeira)", synonym: "Negramoll", region: "Canary Islands" }
+            { primary: "Touriga Nacional", synonym: "Bical Tinto", region: "Portugal" }
+            { primary: "Touriga Nacional", synonym: "Mortágua Preto", region: "Vihno Verde" }
+            { primary: "Trebbiano Toscano", synonym: "Alfrocheiro Branco", region: "Portugal" }           { primary: "Trebbiano Toscano", synonym: "Procanico", region: "Umbria & Lazio" }
+            { primary: "Trebbiano Toscano", synonym: "Rossola", region: "Corsica" }
+            { primary: "Trebbiano Toscano", synonym: "Tália", region: "Portugal" }
+            { primary: "Trebbiano Toscano", synonym: "Ugni Blanc", region: "France, Croatia, & Uruguay" }
+            { primary: "Trollinger (Württemberg)", synonym: "Black Hamburg", region: "England" }
+            { primary: "Trollinger (Württemberg)", synonym: "Schiava Grossa", region: "Italy" }
+            { primary: "Trollinger (Württemberg)", synonym: "Vernatsch", region: "Sudtirol" }
+            { primary: "Trousseau", synonym: "Bastardo", region: "Portugal" }
+            { primary: "Trousseau", synonym: "Maturana Tinta", region: "Rioja" }
+            { primary: "Trousseau", synonym: "Merenzao", region: "Galicia" }
+            { primary: "Trousseau", synonym: "Tintilla", region: "Canary Islands" }
+            { primary: "Verdeca (Puglia)", synonym: "Lagorthi", region: "Greece" }
+            { primary: "Verdicchio", synonym: "Trebbiano di Soave", region: "Veneto" }
+            { primary: "Verdicchio", synonym: "Trebbiano di Lugana", region: "Veneto" }
+            { primary: "Verdicchio", synonym: "Turbiana", region: "Veneto" }
+            { primary: "Vermentino", synonym: "Favorita", region: "Piedmont" }
+            { primary: "Vermentino", synonym: "Malvoisie de Corse", region: "Corsica" }
+            { primary: "Vermentino", synonym: "Pigato", region: "Liguria" }
+            { primary: "Vermentino", synonym: "Rolle", region: "Southern France" }
+            { primary: "Vernaccia di San Gimignano", synonym: "Piccabon", region: "Liguria" }
+            { primary: "Welschriesling", synonym: "Graševina", region: "Croatia" }
+            { primary: "Welschriesling", synonym: "Laški Rizling", region: "Slovenia" }
+            { primary: "Welschriesling", synonym: "Olaszrizling", region: "Hungary" }
+            { primary: "Welschriesling", synonym: "Riesling Italico", region: "Italy" }
+            { primary: "Welschriesling", synonym: "Ryzlink Vlassky", region: "Czech Republic" }
+            { primary: "Xarel·lo", synonym: "Cartoixà", region: "Catalunya" }
+            { primary: "Xarel·lo", synonym: "Pansa Blanca", region: "Catalunya" }
+            { primary: "Xarel·lo", synonym: "Premsal Blanca", region: "Mallorca" }
+            { primary: "Zinfandel", synonym: "Crljenak Kaštelanski", region: "Croatia" }
+            { primary: "Zinfandel", synonym: "Kratošija", region: "Montenegro" }
+            { primary: "Zinfandel", synonym: "Pribidrag", region: "Croatia" }
             { primary: "Zinfandel", synonym: "Primitivo", region: "Italy" }
+            { primary: "Zinfandel", synonym: "Tribidrag", region: "Croatia - Official name" }
+
         ];
 
         const primaryData = rawData.reduce((acc, item) => {
